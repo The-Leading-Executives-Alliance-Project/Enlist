@@ -42,15 +42,18 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setIsLoading(true);
     setError('');
-    
+
     try {
       await AuthService.login(formData);
-      
+
+      // Notify other components of auth change
+      window.dispatchEvent(new Event('authChange'));
+
       // Check for returnUrl and navigate accordingly
       const params = new URLSearchParams(window.location.search);
       const returnUrl = params.get('returnUrl');
@@ -78,7 +81,7 @@ const Login = () => {
               {error}
             </div>
           )}
-          
+
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
@@ -125,7 +128,7 @@ const Login = () => {
             >
               {isLoading ? 'Signing in...' : 'Sign in'}
             </button>
-            
+
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
                 Don't have an account?{' '}

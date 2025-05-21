@@ -69,6 +69,9 @@ const Register = () => {
 
       await AuthService.register(registerData);
 
+      // Notify other components of auth change
+      window.dispatchEvent(new Event('authChange'));
+
       // Redirect to profile after successful registration
       navigate('/profile');
     } catch (error) {

@@ -6,20 +6,25 @@ import { AuthService } from '../../services/api';
 const Header = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
-  
+
   useEffect(() => {
     // Check authentication status
     setIsAuthenticated(AuthService.isAuthenticated());
-    
+
     // Setup listener for auth changes
-    const handleStorageChange = () => {
+    const handleAuthChange = () => {
       setIsAuthenticated(AuthService.isAuthenticated());
     };
-    
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+
+    window.addEventListener('storage', handleAuthChange);
+    window.addEventListener('authChange', handleAuthChange);
+
+    return () => {
+      window.removeEventListener('storage', handleAuthChange);
+      window.removeEventListener('authChange', handleAuthChange);
+    };
   }, []);
-  
+
   const handleLogout = () => {
     AuthService.logout();
     setIsAuthenticated(false);
@@ -32,18 +37,21 @@ const Header = () => {
           <Link to="/" className="text-2xl font-bold text-blue-600">
             CONCIS-Evolve
           </Link>
-          
+
           <div className="flex items-center gap-6">
             <Link to="/" className="text-gray-600 hover:text-blue-600">
               Home
             </Link>
-            
+
             {isAuthenticated ? (
               <>
                 <Link to="/dashboard" className="text-gray-600 hover:text-blue-600">
                   Dashboard
                 </Link>
-                <button 
+                <Link to="/profile" className="text-gray-600 hover:text-blue-600">
+                  Profile
+                </Link>
+                <button
                   onClick={handleLogout}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                 >
