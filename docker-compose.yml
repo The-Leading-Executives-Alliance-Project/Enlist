@@ -1,0 +1,27 @@
+services:
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    image: enlist-client:latest
+    container_name: enlist-client
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+    environment:
+      - VITE_API_URL=http://server:3000
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    image: enlist-server:latest
+    container_name: enlist-server
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+      - MONGODB_URI=mongodb+srv://test_user:leappassword@leap-enlist.6bosfen.mongodb.net/?retryWrites=true&w=majority&appName=LEAP-ENLIST

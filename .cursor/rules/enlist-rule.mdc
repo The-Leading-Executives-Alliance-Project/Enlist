@@ -1,0 +1,16 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+1. Project Description
+This application is designed to streamline the process of college application of high school students. Eventually, the user will be able to: login and register, view and compare stats of selected univeristies, upload and analyze their application, and etc. 
+
+2. Tech Stack
+
+The frontend is using react together with tailwind CSS. The backend is using Express. We connect to mongoDB via connection string. We use Docker to deploy the whole application.
+
+3. Design Principle
+
+
+We will develop this application progressively. New features should not be implemented until I told you to do so. Move reusable elements to the components folder.

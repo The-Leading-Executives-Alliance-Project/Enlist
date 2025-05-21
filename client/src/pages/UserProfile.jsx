@@ -29,7 +29,7 @@ const UserProfile = () => {
         <h2 className="text-center text-3xl font-bold text-gray-900 mb-8">
           User Profile
         </h2>
-        
+
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <div className="space-y-6">
             <div>
@@ -37,7 +37,7 @@ const UserProfile = () => {
                 Full Name
               </label>
               <div className="mt-1 p-3 bg-gray-50 rounded-md">
-                {user.fullName}
+                {user.name}
               </div>
             </div>
 

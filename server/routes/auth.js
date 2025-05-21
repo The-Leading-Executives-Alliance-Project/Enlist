@@ -4,14 +4,14 @@ const router = express.Router();
 const { check, validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const User = require('../server/models/User');
+const User = require('../models/user');
 const auth = require('../middleware/auth');
 
 // @route   POST api/auth/register
 // @desc    Register user
 // @access  Public
 router.post('/register', [
-  check('fullName', 'Full Name is required').not().isEmpty(),
+  check('name', 'Name is required').not().isEmpty(),
   check('email', 'Please include a valid email').isEmail(),
   check('password', 'Please enter a password with 6 or more characters').isLength({ min: 6 })
 ], async (req, res) => {
@@ -22,7 +22,7 @@ router.post('/register', [
     return res.status(400).json({ error: errors.array()[0].msg });
   }
 
-  const { fullName, email, password } = req.body;
+  const { name, email, password } = req.body;
 
   try {
     console.log('Registration attempt for:', email);
@@ -40,7 +40,7 @@ router.post('/register', [
     // Create new user
     console.log('Creating new user:', email);
     user = new User({
-      fullName: fullName,
+      name,
       email,
       password // password will be hashed in the model pre-save hook
     });
@@ -63,7 +63,7 @@ router.post('/register', [
       { expiresIn: '24h' },
       (err, token) => {
         if (err) throw err;
-        res.json({ token, user: { id: user.id, name: user.fullName, email: user.email } });
+        res.json({ token, user: { id: user.id, name: user.name, email: user.email } });
       }
     );
   } catch (err) {
@@ -128,7 +128,7 @@ router.post('/login', [
       { expiresIn: '24h' },
       (err, token) => {
         if (err) throw err;
-        res.json({ token, user: { id: user.id, name: user.fullName, email: user.email } });
+        res.json({ token, user: { id: user.id, name: user.name, email: user.email } });
       }
     );
   } catch (err) {

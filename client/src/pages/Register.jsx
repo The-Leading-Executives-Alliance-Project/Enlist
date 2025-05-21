@@ -6,7 +6,7 @@ import { AuthService } from '../services/api';
 const Register = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    fullName: '',
+    name: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -22,8 +22,8 @@ const Register = () => {
   };
 
   const validateForm = () => {
-    if (!formData.fullName) {
-      setError('Full name is required');
+    if (!formData.name) {
+      setError('Name is required');
       return false;
     }
     if (!formData.email) {
@@ -54,21 +54,21 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setIsLoading(true);
     setError('');
-    
+
     try {
       const registerData = {
-        fullName: formData.fullName,
+        name: formData.name,
         email: formData.email,
         password: formData.password
       };
-      
+
       await AuthService.register(registerData);
-      
+
       // Redirect to profile after successful registration
       navigate('/profile');
     } catch (error) {
@@ -94,19 +94,19 @@ const Register = () => {
               {error}
             </div>
           )}
-          
+
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
                 Full Name
               </label>
               <input
-                id="fullName"
-                name="fullName"
+                id="name"
+                name="name"
                 type="text"
                 required
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none"
-                value={formData.fullName}
+                value={formData.name}
                 onChange={handleChange}
               />
             </div>
@@ -164,7 +164,7 @@ const Register = () => {
             >
               {isLoading ? 'Registering...' : 'Register'}
             </button>
-            
+
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
                 Already have an account?{' '}
