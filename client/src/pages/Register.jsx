@@ -48,7 +48,7 @@ const Register = () => {
   // Check if user is already authenticated
   useEffect(() => {
     if (AuthService.isAuthenticated()) {
-      navigate('/dashboard');
+      navigate('/home');
     }
   }, [navigate]);
 

@@ -36,7 +36,7 @@ const Login = () => {
     if (AuthService.isAuthenticated()) {
       const params = new URLSearchParams(window.location.search);
       const returnUrl = params.get('returnUrl');
-      navigate(returnUrl ? decodeURIComponent(returnUrl) : '/profile');
+      navigate(returnUrl ? decodeURIComponent(returnUrl) : '/home');
     }
   }, [navigate]);
 
@@ -57,7 +57,7 @@ const Login = () => {
       // Check for returnUrl and navigate accordingly
       const params = new URLSearchParams(window.location.search);
       const returnUrl = params.get('returnUrl');
-      navigate(returnUrl ? decodeURIComponent(returnUrl) : '/dashboard');
+      navigate(returnUrl ? decodeURIComponent(returnUrl) : '/home');
     } catch (error) {
       console.error('Login error:', error);
       setError(error.response?.data?.error || 'Invalid email or password. Please try again.');
