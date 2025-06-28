@@ -2,31 +2,11 @@ import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 
 const navItems = [
-    {
-        name: 'Home', path: '/home', icon: (
-            <span className="material-icons">home</span>
-        )
-    },
-    {
-        name: 'Profile', path: '/profile', icon: (
-            <span className="material-icons">person</span>
-        )
-    },
-    {
-        name: 'Grades', path: '/grades', icon: (
-            <span className="material-icons">grade</span>
-        )
-    },
-    {
-        name: 'Applications', path: '/applications', icon: (
-            <span className="material-icons">description</span>
-        )
-    },
-    {
-        name: 'Search', path: '/search', icon: (
-            <span className="material-icons">search</span>
-        )
-    },
+    { name: 'Home', path: '/home' },
+    { name: 'Profile', path: '/profile' },
+    { name: 'Grades', path: '/grades' },
+    { name: 'Applications', path: '/applications' },
+    { name: 'Search', path: '/search' },
 ];
 
 const NavBar = () => {
@@ -50,7 +30,6 @@ const NavBar = () => {
                             }
                             end
                         >
-                            {item.icon}
                             {item.name}
                         </NavLink>
                     </li>
