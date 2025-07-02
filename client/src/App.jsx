@@ -10,6 +10,7 @@ import Grades from './pages/Grades';
 import Applications from './pages/Applications';
 import Search from './pages/Search';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import DashboardLayout from './components/DashboardLayout';
 
 function App() {
   return (
@@ -18,31 +19,19 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/home" element={
+
+        {/* Dashboard routes with persistent NavBar */}
+        <Route path="/" element={
           <ProtectedRoute>
-            <Home />
+            <DashboardLayout />
           </ProtectedRoute>
-        } />
-        <Route path="/profile" element={
-          <ProtectedRoute>
-            <UserProfile />
-          </ProtectedRoute>
-        } />
-        <Route path="/grades" element={
-          <ProtectedRoute>
-            <Grades />
-          </ProtectedRoute>
-        } />
-        <Route path="/applications" element={
-          <ProtectedRoute>
-            <Applications />
-          </ProtectedRoute>
-        } />
-        <Route path="/search" element={
-          <ProtectedRoute>
-            <Search />
-          </ProtectedRoute>
-        } />
+        }>
+          <Route path="home" element={<Home />} />
+          <Route path="profile" element={<UserProfile />} />
+          <Route path="grades" element={<Grades />} />
+          <Route path="applications" element={<Applications />} />
+          <Route path="search" element={<Search />} />
+        </Route>
       </Routes>
     </Router>
   );
