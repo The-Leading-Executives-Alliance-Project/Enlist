@@ -8,6 +8,7 @@ const { connectDB } = require('./config/db');
 const authRoutes = require('./routes/auth');
 const applicationRoutes = require('./routes/application');
 const documentRoutes = require('./routes/document');
+const userProfileRoutes = require('./routes/userProfile');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -21,6 +22,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/auth', authRoutes); // Auth routes from routes/auth.js
 app.use('/api/applications', applicationRoutes);
 app.use('/api/documents', documentRoutes);
+app.use('/api/userprofile', userProfileRoutes);
 
 // Log all requests for debugging
 app.use((req, res, next) => {

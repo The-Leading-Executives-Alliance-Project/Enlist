@@ -4,6 +4,7 @@ import Select from 'react-select';
 import { Country, State } from 'country-state-city';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
+import api from '../services/api'; // Added import for api
 
 const Form = () => {
     const [currentStep, setCurrentStep] = useState(1);
@@ -207,6 +208,12 @@ const Form = () => {
         { value: 'Other', label: 'Other' }
     ];
 
+    const aLevelCourses = [
+        "Mathematics", "Further Mathematics", "Physics", "Chemistry", "Biology", "Economics", "Business", "Accounting",
+        "Computer Science", "English Literature", "History", "Geography", "Psychology", "Sociology", "Art and Design"
+    ];
+    const aLevelScores = ["A*", "A", "B", "C", "D", "E", "U"];
+
     const handleInputChange = (field, value) => {
         setFormData(prev => ({
             ...prev,
@@ -268,11 +275,15 @@ const Form = () => {
             case 3:
                 return formData.preferredCountries.length > 0 && formData.preferredMajor;
             case 4:
-                // Check if at least one academic program is selected
-                const hasAcademicProgram = formData.academicProgram &&
-                    ((formData.academicProgram === 'IB' && formData.ibScore !== '') ||
+                // Accept 'None' as a valid academic program
+                const hasAcademicProgram =
+                    formData.academicProgram &&
+                    (
+                        formData.academicProgram === 'None' ||
+                        (formData.academicProgram === 'IB' && formData.ibScore !== '') ||
                         (formData.academicProgram === 'AP' && formData.apScores.length > 0) ||
-                        (formData.academicProgram === 'A-Level' && formData.aLevelScores.length > 0));
+                        (formData.academicProgram === 'A-Level' && formData.aLevelScores.length > 0)
+                    );
 
                 // Check college test scores if selected
                 const hasCollegeTest = formData.collegeTest === 'Neither' ||
@@ -303,10 +314,22 @@ const Form = () => {
         }
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (isStepValid(4)) {
-            console.log('Form submitted:', formData);
-            // Handle form submission here
+            try {
+                const response = await api.post('/userprofile', formData);
+                console.log('Profile submitted successfully:', response.data);
+                alert('Profile submitted successfully!');
+                // Optionally redirect or update UI
+            } catch (err) {
+                if (err.response) {
+                    console.error('Profile submission error:', err.response.data);
+                    alert('Error: ' + (err.response.data.error || 'Unknown error'));
+                } else {
+                    console.error('Profile submission error:', err.message);
+                    alert('Error: ' + err.message);
+                }
+            }
         }
     };
 
@@ -709,6 +732,55 @@ const Form = () => {
                                 <button
                                     type="button"
                                     onClick={addApScore}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    +
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {formData.academicProgram === 'A-Level' && (
+                        <div className="space-y-4">
+                            <label className="block text-sm font-medium text-gray-700">
+                                A-Level Scores *
+                            </label>
+                            {formData.aLevelScores.map((score, index) => (
+                                <div key={index} className="flex items-center space-x-2 p-3 bg-gray-50 rounded-md">
+                                    <span className="text-sm font-medium">{score.course}: {score.score}</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => removeALevelScore(index)}
+                                        className="ml-auto text-red-600 hover:text-red-800"
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+                            ))}
+                            <div className="flex space-x-2">
+                                <select
+                                    value={newALevelCourse}
+                                    onChange={(e) => setNewALevelCourse(e.target.value)}
+                                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="">Select A-Level course</option>
+                                    {aLevelCourses.map(course => (
+                                        <option key={course} value={course}>{course}</option>
+                                    ))}
+                                </select>
+                                <select
+                                    value={newALevelScore}
+                                    onChange={(e) => setNewALevelScore(e.target.value)}
+                                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="">Select score</option>
+                                    {aLevelScores.map(score => (
+                                        <option key={score} value={score}>{score}</option>
+                                    ))}
+                                </select>
+                                <button
+                                    type="button"
+                                    onClick={addALevelScore}
                                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 >
                                     +
