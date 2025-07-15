@@ -6,7 +6,7 @@ import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import api from '../services/api'; // Added import for api
 
-const Form = () => {
+const Form = ({ onFormComplete }) => {
     const [currentStep, setCurrentStep] = useState(1);
     const [formData, setFormData] = useState({
         // Step 1: Personal Information
@@ -319,8 +319,14 @@ const Form = () => {
             try {
                 const response = await api.post('/userprofile', formData);
                 console.log('Profile submitted successfully:', response.data);
-                alert('Profile submitted successfully!');
-                // Optionally redirect or update UI
+                
+                // Call the callback to notify parent component
+                if (onFormComplete) {
+                    onFormComplete();
+                }
+                
+                // Remove the alert since we're auto-rendering the profile
+                // alert('Profile submitted successfully!');
             } catch (err) {
                 if (err.response) {
                     console.error('Profile submission error:', err.response.data);

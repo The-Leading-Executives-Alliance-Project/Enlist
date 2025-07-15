@@ -9,7 +9,6 @@ import UserProfile from './pages/UserProfile';
 import Grades from './pages/Grades';
 import Applications from './pages/Applications';
 import Search from './pages/Search';
-import Form from './components/Form';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import DashboardLayout from './components/DashboardLayout';
 
@@ -32,7 +31,6 @@ function App() {
           <Route path="grades" element={<Grades />} />
           <Route path="applications" element={<Applications />} />
           <Route path="search" element={<Search />} />
-          <Route path="form" element={<Form />} />
         </Route>
       </Routes>
     </Router>
