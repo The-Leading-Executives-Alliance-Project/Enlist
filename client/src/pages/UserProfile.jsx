@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthService } from '../services/api';
+import api from '../services/api';
 import Form from '../components/Form';
 
 const UserProfile = () => {
@@ -10,7 +11,6 @@ const UserProfile = () => {
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('personal');
-  const [hasCompletedForm, setHasCompletedForm] = useState(false);
 
   useEffect(() => {
     // If user is not authenticated, redirect to login
@@ -19,38 +19,26 @@ const UserProfile = () => {
       return;
     }
 
-    // Fetch user profile data
-    const fetchProfile = async () => {
-      try {
-        const response = await fetch('/api/userprofile/me', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          }
-        });
+    // Only fetch profile if formCompleted is true
+    if (user && user.formCompleted) {
+      const fetchProfile = async () => {
+        try {
+          const response = await api.get('/userprofile/me');
 
-        if (response.ok) {
-          const data = await response.json();
-          if (data) {
-            setProfileData(data);
-            // Use the formCompleted field from database instead of checking required fields
-            setHasCompletedForm(data.formCompleted || false);
+          if (response.data) {
+            setProfileData(response.data);
           }
-        } else {
-          // If no profile exists, user hasn't completed the form
-          setHasCompletedForm(false);
+        } catch (error) {
+          console.error('Error fetching profile:', error);
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        console.error('Error fetching profile:', error);
-        // If no profile exists, user hasn't completed the form
-        setHasCompletedForm(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProfile();
-  }, [navigate]);
+      };
+      fetchProfile();
+    } else {
+      setLoading(false);
+    }
+  }, [navigate, user]);
 
   // If no user data, show loading
   if (!user || loading) {
@@ -62,8 +50,17 @@ const UserProfile = () => {
   }
 
   // If user hasn't completed the form, show the form
-  if (!hasCompletedForm) {
-    return <Form onFormComplete={() => setHasCompletedForm(true)} />;
+  if (!user.formCompleted) {
+    return <Form onFormComplete={() => window.location.reload()} />;
+  }
+
+  // If profile data hasnt been loaded yet, show loading
+  if (!profileData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col justify-center">
+        <div className="text-center">Loading profile data...</div>
+      </div>
+    );
   }
 
   // Helper function to format data for display
@@ -423,8 +420,8 @@ const UserProfile = () => {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === tab.id
-                    ? 'border-purple-500 text-gray-900'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-purple-500 text-gray-900'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
               >
                 {tab.label}
