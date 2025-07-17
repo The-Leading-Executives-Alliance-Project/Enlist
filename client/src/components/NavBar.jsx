@@ -5,7 +5,8 @@ import {
     AiOutlineUser,
     AiOutlineBook,
     AiOutlineFileText,
-    AiOutlineSearch
+    AiOutlineSearch,
+    AiOutlineEdit
 } from 'react-icons/ai';
 import {
     IoChevronBackCircleOutline,
@@ -18,6 +19,7 @@ const navItems = [
     { name: 'Grades', path: '/grades', icon: <AiOutlineBook size={20} /> },
     { name: 'Applications', path: '/applications', icon: <AiOutlineFileText size={20} /> },
     { name: 'Search', path: '/search', icon: <AiOutlineSearch size={20} /> },
+    { name: 'Document', path: '/document', icon: <AiOutlineEdit size={20} /> },
 ];
 
 const NavBar = () => {
