@@ -28,18 +28,13 @@ const UserProfile = () => {
             'Content-Type': 'application/json'
           }
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           if (data) {
             setProfileData(data);
-            // Check if user has completed the form by looking for required fields
-            const hasRequiredFields = data.dateOfBirth && 
-                                    data.nationality && 
-                                    data.gender && 
-                                    data.countryOfResidence && 
-                                    data.phoneNumber;
-            setHasCompletedForm(hasRequiredFields);
+            // Use the formCompleted field from database instead of checking required fields
+            setHasCompletedForm(data.formCompleted || false);
           }
         } else {
           // If no profile exists, user hasn't completed the form
@@ -89,7 +84,7 @@ const UserProfile = () => {
           Edit
         </button>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
@@ -97,28 +92,28 @@ const UserProfile = () => {
             {formatValue(profileData.dateOfBirth)}
           </div>
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Nationality</label>
           <div className="p-3 bg-gray-50 rounded-md text-gray-900">
             {formatValue(profileData.nationality)}
           </div>
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
           <div className="p-3 bg-gray-50 rounded-md text-gray-900">
             {formatValue(profileData.gender)}
           </div>
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Country of Residence</label>
           <div className="p-3 bg-gray-50 rounded-md text-gray-900">
             {formatValue(profileData.countryOfResidence)}
           </div>
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
           <div className="p-3 bg-gray-50 rounded-md text-gray-900">
@@ -138,7 +133,7 @@ const UserProfile = () => {
           Edit
         </button>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">School Country</label>
@@ -146,35 +141,35 @@ const UserProfile = () => {
             {formatValue(profileData.schoolCountry)}
           </div>
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">School Province/State</label>
           <div className="p-3 bg-gray-50 rounded-md text-gray-900">
             {formatValue(profileData.schoolProvince)}
           </div>
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">School City</label>
           <div className="p-3 bg-gray-50 rounded-md text-gray-900">
             {formatValue(profileData.schoolCity)}
           </div>
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Current Grade</label>
           <div className="p-3 bg-gray-50 rounded-md text-gray-900">
             {formatValue(profileData.currentGrade)}
           </div>
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Graduation Date</label>
           <div className="p-3 bg-gray-50 rounded-md text-gray-900">
             {formatValue(profileData.graduationDate)}
           </div>
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">GPA</label>
           <div className="p-3 bg-gray-50 rounded-md text-gray-900">
@@ -194,7 +189,7 @@ const UserProfile = () => {
           Edit
         </button>
       </div>
-      
+
       <div className="space-y-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Preferred Countries</label>
@@ -202,7 +197,7 @@ const UserProfile = () => {
             {formatValue(profileData.preferredCountries)}
           </div>
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Preferred Major</label>
           <div className="p-3 bg-gray-50 rounded-md text-gray-900">
@@ -222,7 +217,7 @@ const UserProfile = () => {
           Edit
         </button>
       </div>
-      
+
       <div className="space-y-8">
         {/* Academic Programs */}
         <div className="border-b border-gray-200 pb-6">
@@ -234,7 +229,7 @@ const UserProfile = () => {
                 {formatValue(profileData.academicProgram)}
               </div>
             </div>
-            
+
             {profileData.academicProgram === 'IB' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">IB Score</label>
@@ -243,7 +238,7 @@ const UserProfile = () => {
                 </div>
               </div>
             )}
-            
+
             {profileData.academicProgram === 'AP' && profileData.apScores && profileData.apScores.length > 0 && (
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">AP Scores</label>
@@ -256,7 +251,7 @@ const UserProfile = () => {
                 </div>
               </div>
             )}
-            
+
             {profileData.academicProgram === 'A-Level' && profileData.aLevelScores && profileData.aLevelScores.length > 0 && (
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">A-Level Scores</label>
@@ -282,7 +277,7 @@ const UserProfile = () => {
                 {formatValue(profileData.collegeTest)}
               </div>
             </div>
-            
+
             {profileData.collegeTest === 'SAT' && (
               <>
                 <div>
@@ -305,7 +300,7 @@ const UserProfile = () => {
                 </div>
               </>
             )}
-            
+
             {profileData.collegeTest === 'ACT' && (
               <>
                 <div>
@@ -347,7 +342,7 @@ const UserProfile = () => {
                 {formatValue(profileData.englishTest)}
               </div>
             </div>
-            
+
             {profileData.englishTest === 'TOEFL' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">TOEFL Score</label>
@@ -356,7 +351,7 @@ const UserProfile = () => {
                 </div>
               </div>
             )}
-            
+
             {profileData.englishTest === 'IELTS' && (
               <>
                 <div>
@@ -427,11 +422,10 @@ const UserProfile = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === tab.id
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === tab.id
                     ? 'border-purple-500 text-gray-900'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
+                  }`}
               >
                 {tab.label}
               </button>

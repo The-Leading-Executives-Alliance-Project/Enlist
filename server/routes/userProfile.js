@@ -15,7 +15,11 @@ router.post('/', auth, async (req, res) => {
       console.error('No userId found in req.user:', req.user);
       return res.status(400).json({ error: 'User ID not found in authentication token.' });
     }
-    const profileData = { ...req.body, user: userId };
+    const profileData = { 
+      ...req.body, 
+      user: userId,
+      formCompleted: true // Set formCompleted to true when profile is submitted
+    };
     console.log('Upserting profile for user:', userId, profileData);
 
     const profile = await UserProfile.findOneAndUpdate(
