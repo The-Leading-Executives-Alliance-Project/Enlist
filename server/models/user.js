@@ -25,6 +25,10 @@ const userSchema = new mongoose.Schema({
     enum: ['user', 'admin', 'student', 'counselor'],
     default: 'student',
   },
+  formCompleted: {
+    type: Boolean,
+    default: false,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
