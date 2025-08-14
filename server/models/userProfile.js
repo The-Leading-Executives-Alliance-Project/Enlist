@@ -3,7 +3,6 @@ const Schema = mongoose.Schema;
 
 const userProfileSchema = new Schema({
   user: { type: Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
-  formCompleted: { type: Boolean, default: false },
   dateOfBirth: String,
   nationality: String,
   gender: String,

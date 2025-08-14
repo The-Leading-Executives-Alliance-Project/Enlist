@@ -63,7 +63,7 @@ router.post('/register', [
       { expiresIn: '24h' },
       (err, token) => {
         if (err) throw err;
-        res.json({ token, user: { id: user.id, name: user.name, email: user.email } });
+        res.json({ token, user: { id: user.id, name: user.name, email: user.email, formCompleted: user.formCompleted } });
       }
     );
   } catch (err) {
@@ -128,7 +128,7 @@ router.post('/login', [
       { expiresIn: '24h' },
       (err, token) => {
         if (err) throw err;
-        res.json({ token, user: { id: user.id, name: user.name, email: user.email } });
+        res.json({ token, user: { id: user.id, name: user.name, email: user.email, formCompleted: user.formCompleted } });
       }
     );
   } catch (err) {

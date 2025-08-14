@@ -319,12 +319,20 @@ const Form = ({ onFormComplete }) => {
             try {
                 const response = await api.post('/userprofile', formData);
                 console.log('Profile submitted successfully:', response.data);
-                
+
+                // Update user object in localStorage to set formCompleted to true
+                const userStr = localStorage.getItem('user');
+                if (userStr) {
+                    const user = JSON.parse(userStr);
+                    user.formCompleted = true;
+                    localStorage.setItem('user', JSON.stringify(user));
+                }
+
                 // Call the callback to notify parent component
                 if (onFormComplete) {
                     onFormComplete();
                 }
-                
+
                 // Remove the alert since we're auto-rendering the profile
                 // alert('Profile submitted successfully!');
             } catch (err) {
@@ -368,6 +376,7 @@ const Form = ({ onFormComplete }) => {
                         type="date"
                         value={formData.dateOfBirth}
                         onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                        max={new Date().toISOString().split('T')[0]}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         required
                     />
