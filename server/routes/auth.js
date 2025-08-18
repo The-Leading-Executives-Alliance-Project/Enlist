@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/user');
 const auth = require('../middleware/auth');
+const { JWT_SECRET } = require('../config/env');
 
 // @route   POST api/auth/register
 // @desc    Register user
@@ -59,7 +60,7 @@ router.post('/register', [
 
     jwt.sign(
       payload,
-      process.env.JWT_SECRET,
+      JWT_SECRET,
       { expiresIn: '24h' },
       (err, token) => {
         if (err) throw err;
@@ -124,7 +125,7 @@ router.post('/login', [
 
     jwt.sign(
       payload,
-      process.env.JWT_SECRET,
+      JWT_SECRET,
       { expiresIn: '24h' },
       (err, token) => {
         if (err) throw err;
