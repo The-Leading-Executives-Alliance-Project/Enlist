@@ -11,6 +11,8 @@ import Applications from './pages/Applications';
 import Search from './pages/Search';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import DashboardLayout from './components/DashboardLayout';
+import Document from './pages/Document';
+import DocumentEditor from './pages/DocumentEditor';
 
 function App() {
   return (
@@ -31,6 +33,8 @@ function App() {
           <Route path="grades" element={<Grades />} />
           <Route path="applications" element={<Applications />} />
           <Route path="search" element={<Search />} />
+          <Route path="document" element={<Document />} />
+          <Route path="document/edition/:essayId" element={<DocumentEditor />} />
         </Route>
       </Routes>
     </Router>
