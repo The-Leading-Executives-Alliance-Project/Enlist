@@ -20,10 +20,12 @@
     "countries-list": "^3.1.1",
     "country-state-city": "^3.2.1",
     "prop-types": "^15.8.1",
+    "quill": "^2.0.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-icons": "^5.5.0",
     "react-phone-input-2": "^2.15.1",
+    "react-quill": "^2.0.0",
     "react-router-dom": "^7.4.0",
     "react-select": "^5.10.1"
   },
