@@ -17,42 +17,62 @@ const DocumentEditor = () => {
 
     const textareaRef = useRef(null);
 
-    // Apply text changes and create highlights
-    const applyTextChanges = (changes) => {
-        let newText = essay; // Start with current essay, not original
+    // Apply text changes with position calculation using our algorithm
+    const applyTextChanges = (changes, baseText) => {
+        let newText = baseText;
         const newHighlights = [];
-        let offset = 0;
+        let offset = 0; // Track cumulative position changes
 
-        // Sort changes by start position to apply them in order
-        const sortedChanges = [...changes].sort((a, b) => a.range.start - b.range.start);
+        // Calculate positions first, then sort by position
+        const changesWithPositions = changes.map(change => {
+            const position = findTextPosition(baseText, change.originalText);
+            return { ...change, position };
+        }).filter(change => change.position !== null); // Remove changes where text wasn't found
+
+        // Sort by calculated position
+        const sortedChanges = changesWithPositions.sort((a, b) => a.position.start - b.position.start);
 
         sortedChanges.forEach((change, index) => {
-            const { range, newText: replacementText } = change;
+            const { newText: replacementText, originalText, position } = change;
 
             // Adjust positions for previous changes
-            const adjustedStart = range.start + offset;
-            const adjustedEnd = range.end + offset;
+            const adjustedStart = position.start + offset;
+            const adjustedEnd = position.end + offset;
 
-            // Apply the change - replace original text with suggested text
-            newText = newText.substring(0, adjustedStart) + replacementText + newText.substring(adjustedEnd);
+            console.log('Adjusted start:', adjustedStart);
+            // Apply the change
+            newText = newText.substring(0, adjustedStart) +
+                replacementText +
+                newText.substring(adjustedEnd);
 
-            // Create highlight range for the suggested text
+            // Create highlight at the adjusted position
             newHighlights.push({
                 id: `highlight-${index}`,
                 start: adjustedStart,
                 end: adjustedStart + replacementText.length,
                 sectionId: change.sectionId,
-                originalText: essay.substring(range.start, range.end), // Store original for rejection
+                changeIndex: index,
+                originalText: originalText,
                 newText: replacementText
             });
 
             // Update offset for next changes
-            offset += replacementText.length - (range.end - range.start);
+            offset += replacementText.length - (position.end - position.start);
         });
 
-        // Update the textarea with the modified text (suggested text is now in the textarea)
         setEssay(newText);
         setHighlightedRanges(newHighlights);
+    };
+
+    // Algorithm to find text position in base text
+    const findTextPosition = (baseText, searchText) => {
+        const start = baseText.indexOf(searchText);
+        if (start === -1) return null; // Text not found
+
+        return {
+            start: start,
+            end: start + searchText.length
+        };
     };
 
     // Remove highlights for a specific section
@@ -60,57 +80,82 @@ const DocumentEditor = () => {
         setHighlightedRanges(prev => prev.filter(h => h.sectionId !== sectionId));
     };
 
-    // Accept a suggestion section
-    const handleAcceptSection = (sectionId) => {
-        // Remove highlights for this section (changes are already applied)
-        removeSectionHighlights(sectionId);
+    // Accept an individual change
+    const handleAcceptChange = (sectionId, changeIndex) => {
+        console.log('Accepting change:', sectionId, changeIndex);
 
-        // Update section status
+        // Update the specific change status
         setSuggestionSections(prev =>
             prev.map(section =>
                 section.id === sectionId
-                    ? { ...section, status: 'accepted' }
+                    ? {
+                        ...section,
+                        changes: section.changes.map((change, index) =>
+                            index === changeIndex
+                                ? { ...change, status: 'accepted' }
+                                : change
+                        )
+                    }
                     : section
             )
+        );
+
+        // Remove highlights for this specific change
+        setHighlightedRanges(prev =>
+            prev.filter(h => !(h.sectionId === sectionId && h.changeIndex === changeIndex))
         );
     };
 
-    // Reject a suggestion section
-    const handleRejectSection = (sectionId) => {
+    // Reject an individual change
+    const handleRejectChange = (sectionId, changeIndex) => {
+        console.log('Rejecting change:', sectionId, changeIndex);
+
         const section = suggestionSections.find(s => s.id === sectionId);
         if (!section) return;
 
-        // Revert changes for this section
-        const sectionHighlights = highlightedRanges.filter(h => h.sectionId === sectionId);
+        const change = section.changes[changeIndex];
+        if (!change) return;
 
-        let newText = essay;
-        let offset = 0;
+        console.log('Rejecting change:', change);
 
-        // Sort highlights by position and revert them
-        const sortedHighlights = [...sectionHighlights].sort((a, b) => a.start - b.start);
-
-        sortedHighlights.forEach(highlight => {
-            const adjustedStart = highlight.start + offset;
-            const adjustedEnd = highlight.end + offset;
-
-            // Revert to original text
-            newText = newText.substring(0, adjustedStart) + highlight.originalText + newText.substring(adjustedEnd);
-
-            // Update offset
-            offset += highlight.originalText.length - (highlight.end - highlight.start);
-        });
-
-        setEssay(newText);
-        removeSectionHighlights(sectionId);
-
-        // Update section status
+        // Update the specific change status
         setSuggestionSections(prev =>
             prev.map(section =>
                 section.id === sectionId
-                    ? { ...section, status: 'rejected' }
+                    ? {
+                        ...section,
+                        changes: section.changes.map((c, index) =>
+                            index === changeIndex
+                                ? { ...c, status: 'rejected' }
+                                : c
+                        )
+                    }
                     : section
             )
         );
+
+        // Get all remaining pending changes (excluding the rejected one)
+        const remainingChanges = suggestionSections
+            .flatMap(section =>
+                section.changes
+                    .filter((change, index) =>
+                        change.status === 'pending' &&
+                        !(section.id === sectionId && index === changeIndex)
+                    )
+                    .map(change => ({
+                        ...change,
+                        sectionId: section.id
+                    }))
+            );
+
+        // Reapply all remaining changes from the original essay
+        if (remainingChanges.length > 0) {
+            applyTextChanges(remainingChanges, originalEssay);
+        } else {
+            // No active changes, revert to original
+            setEssay(originalEssay);
+            setHighlightedRanges([]);
+        }
     };
 
     const handleSendMessage = async (message) => {
@@ -122,68 +167,113 @@ const DocumentEditor = () => {
             setMessages(prev => [...prev, userMessage]);
 
             // Store original essay before AI makes changes
-            setOriginalEssay(essay);
+            const currentEssay = essay;
+            console.log('Storing original essay before AI changes:', currentEssay);
+            setOriginalEssay(currentEssay);
 
-            // Simulate AI response with multiple suggestion sections
-            const aiResponse = `I've analyzed your essay and made several improvements:`;
+            // Prepare the prompt for AI
+            const prompt = `You are an expert essay writing assistant. Your role is to help improve essays by making specific, targeted changes.
 
-            // Create mock suggestion sections (replace with real AI response later)
-            const mockSections = [
-                {
-                    id: 'section-1',
-                    title: 'Grammar & Style',
-                    description: 'Fixed grammatical errors and improved writing style',
-                    changes: [
-                        {
-                            range: { start: 0, end: 4 },
-                            newText: 'I am',
-                            description: 'Fixed subject-verb agreement',
-                            originalText: essay.substring(0, 4) || 'I am'
-                        },
-                        {
-                            range: { start: Math.max(0, essay.length - 10), end: essay.length },
-                            newText: 'university.',
-                            description: 'Improved sentence ending',
-                            originalText: essay.substring(Math.max(0, essay.length - 10), essay.length) || 'university.'
-                        }
-                    ],
-                    status: 'pending'
+Current essay:
+${currentEssay}
+
+User request: ${message}
+
+Please improve the essay based on the user's request. Respond with ONLY a JSON object in this exact format:
+{
+  "improvedText": "the complete improved essay text",
+  "changes": [
+    {
+      "originalText": "exact original text to be replaced",
+      "newText": "improved text to replace it",
+      "title": "Brief title for this improvement (e.g., 'Enhanced Vocabulary', 'Improved Clarity', 'Better Flow')",
+      "description": "Detailed explanation of why this change was made and how it improves the essay"
+    }
+  ]
+}
+
+IMPORTANT REQUIREMENTS:
+- The "originalText" should be the EXACT text that was in the original essay
+- The "newText" should be the EXACT text that will replace it
+- Make sure the originalText exists in the current essay
+- Focus on making meaningful improvements to content, clarity, and flow
+- Provide clear, specific changes rather than vague suggestions
+
+Make sure the JSON is valid and properly formatted.`;
+
+            // Call OpenAI API
+            const response = await fetch('/api/document-chat/improve', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}` // This is the JWT token
                 },
-                {
-                    id: 'section-2',
-                    title: 'Content Enhancement',
-                    description: 'Added more compelling and descriptive language',
-                    changes: [
-                        {
-                            range: { start: Math.floor(essay.length / 3), end: Math.floor(essay.length / 2) },
-                            newText: 'passionate about learning and',
-                            description: 'Enhanced with stronger language',
-                            originalText: essay.substring(Math.floor(essay.length / 3), Math.floor(essay.length / 2)) || 'like to study'
-                        }
-                    ],
-                    status: 'pending'
-                }
-            ];
+                body: JSON.stringify({
+                    prompt: prompt
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to get AI response');
+            }
+
+            const data = await response.json();
+
+            // Parse AI response
+            let aiResponse;
+            let changes = [];
+
+            // Log the raw AI response to see what we're getting
+            console.log('Raw AI Response:', data.message);
+            console.log('Response type:', typeof data.message);
+            console.log('Response length:', data.message.length);
+
+            try {
+                const parsedResponse = JSON.parse(data.message);
+                aiResponse = `I've analyzed your essay and made improvements based on your request.`;
+                changes = parsedResponse.changes || [];
+
+                // Don't set the essay here - let applyTextChanges handle it
+
+            } catch (parseError) {
+                console.error('Failed to parse AI response:', parseError);
+                aiResponse = 'I made some improvements to your essay.';
+                // Fallback: treat the response as plain text
+                setEssay(data.message);
+            }
+
+            // Create single suggestion section
+            const suggestionSection = {
+                id: 'ai-suggestions',
+                title: 'AI Improvements',
+                description: 'Improvements based on your request',
+                changes: changes.map((change, index) => ({
+                    newText: change.newText,
+                    title: change.title || `Improvement ${index + 1}`,
+                    description: change.description,
+                    originalText: change.originalText,
+                    status: 'pending' // Individual change status
+                })),
+                status: 'pending'
+            };
 
             // Add section IDs to changes
-            const changesWithSectionIds = mockSections.flatMap(section =>
-                section.changes.map(change => ({
-                    ...change,
-                    sectionId: section.id
-                }))
-            );
+            const changesWithSectionIds = suggestionSection.changes.map(change => ({
+                ...change,
+                sectionId: suggestionSection.id
+            }));
 
-            // Apply all changes automatically
-            applyTextChanges(changesWithSectionIds);
+            // Apply all changes automatically using the current essay as the base
+            applyTextChanges(changesWithSectionIds, currentEssay);
 
-            // Store suggestion sections
-            setSuggestionSections(mockSections);
+            // Store suggestion section
+            setSuggestionSections([suggestionSection]);
 
             // Add AI response to chat
             const aiMessage = {
                 sender: 'ai',
                 text: aiResponse,
-                suggestionSections: mockSections
+                suggestionSections: [suggestionSection]
             };
             setMessages(prev => [...prev, aiMessage]);
 
@@ -225,8 +315,8 @@ const DocumentEditor = () => {
                 messages={messages}
                 isLoading={isLoading}
                 suggestionSections={suggestionSections}
-                onAcceptSection={handleAcceptSection}
-                onRejectSection={handleRejectSection}
+                onAcceptChange={handleAcceptChange}
+                onRejectChange={handleRejectChange}
             />
         </div>
     );

@@ -44,72 +44,53 @@ const TextAreaDocument = ({
         if (quillInstanceRef.current) {
             const currentText = quillInstanceRef.current.getText().trim();
             if (currentText !== essay) {
-                // Clear existing content and formatting
-                quillInstanceRef.current.setText('');
+                // Set the new text content
+                quillInstanceRef.current.setText(essay);
 
+                // Apply highlights if any
                 if (highlightedRanges.length > 0) {
-                    // Insert text with highlighting
-                    insertTextWithHighlights();
-                } else {
-                    // Insert plain text
-                    quillInstanceRef.current.setText(essay);
+                    applyChangesWithHighlights();
                 }
             }
         }
-    }, [essay, highlightedRanges]);
+    }, [essay]); // Only depend on essay changes
 
     // Handle highlighting updates (when sections are accepted/rejected)
     useEffect(() => {
         if (quillInstanceRef.current) {
-            const currentText = quillInstanceRef.current.getText().trim();
-            if (currentText === essay) {
-                // Content is in sync, update highlighting
-                if (highlightedRanges.length > 0) {
-                    // Re-apply highlighting
-                    insertTextWithHighlights();
-                } else {
-                    // Remove all highlighting - convert to plain text
-                    quillInstanceRef.current.setText(essay);
-                }
+            // Always re-apply highlights when they change
+            if (highlightedRanges.length > 0) {
+                applyChangesWithHighlights();
+            } else {
+                // Remove all highlighting - convert to plain text
+                quillInstanceRef.current.setText(essay);
             }
         }
-    }, [highlightedRanges]);
+    }, [highlightedRanges]); // Only depend on highlight changes
 
-    // Insert text with highlighting
-    const insertTextWithHighlights = () => {
+    // Apply changes incrementally with proper position tracking
+    const applyChangesWithHighlights = () => {
         if (!quillInstanceRef.current || highlightedRanges.length === 0) return;
 
         const quill = quillInstanceRef.current;
-        const sortedHighlights = [...highlightedRanges].sort((a, b) => a.start - b.start);
 
-        let lastIndex = 0;
+        console.log('Applying highlights to existing text:', {
+            essayLength: essay.length,
+            highlightedRanges: highlightedRanges,
+            currentQuillText: quill.getText()
+        });
 
-        sortedHighlights.forEach((highlight, index) => {
-            // Insert text before highlight
-            if (highlight.start > lastIndex) {
-                const textBefore = essay.substring(lastIndex, highlight.start);
-                quill.insertText(quill.getLength() - 1, textBefore);
-            }
+        // First, ensure the text content is correct
+        quill.setText(essay);
 
-            // Insert highlighted text
-            const highlightedText = essay.substring(highlight.start, highlight.end);
-            const insertIndex = quill.getLength() - 1;
-            quill.insertText(insertIndex, highlightedText);
-
-            // Apply highlighting
-            quill.formatText(insertIndex, highlightedText.length, {
+        // Then apply highlights to the existing text (don't insert new text)
+        highlightedRanges.forEach((highlight, index) => {
+            // Format the text that's already in the editor at the specified range
+            quill.formatText(highlight.start, highlight.end - highlight.start, {
                 background: '#dbeafe', // Light blue background
                 color: '#1e40af' // Darker blue text
             });
-
-            lastIndex = highlight.end;
         });
-
-        // Insert remaining text
-        if (lastIndex < essay.length) {
-            const remainingText = essay.substring(lastIndex);
-            quill.insertText(quill.getLength() - 1, remainingText);
-        }
     };
 
     return (
