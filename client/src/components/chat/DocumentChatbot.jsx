@@ -4,7 +4,7 @@ const DocumentChatbot = ({
     onSendMessage,
     messages = [],
     isLoading = false,
-    suggestionSections = [],
+    changes = [],
     onAcceptChange,
     onRejectChange
 }) => {
@@ -18,15 +18,15 @@ const DocumentChatbot = ({
         setInput('');
     };
 
-    const handleAcceptChange = (sectionId, changeIndex) => {
+    const handleAcceptChange = (changeIndex) => {
         if (onAcceptChange) {
-            onAcceptChange(sectionId, changeIndex);
+            onAcceptChange(changeIndex);
         }
     };
 
-    const handleRejectChange = (sectionId, changeIndex) => {
+    const handleRejectChange = (changeIndex) => {
         if (onRejectChange) {
-            onRejectChange(sectionId, changeIndex);
+            onRejectChange(changeIndex);
         }
     };
 
@@ -43,77 +43,61 @@ const DocumentChatbot = ({
                             }`}>
                             {msg.text}
 
-                            {/* Show suggestion sections for AI messages */}
-                            {msg.sender === 'ai' && msg.suggestionSections && msg.suggestionSections.length > 0 && (
-                                <div className="mt-3 space-y-2">
-                                    {msg.suggestionSections.map((section) => (
-                                        <div key={section.id} className="bg-white rounded border border-gray-300 p-3">
-                                            <div className="mb-3">
-                                                <h4 className="font-semibold text-sm text-gray-800 mb-1">
-                                                    {section.title}
-                                                </h4>
-                                                <p className="text-xs text-gray-600">
-                                                    {section.description}
-                                                </p>
+                            {/* Show changes for AI messages */}
+                            {msg.sender === 'ai' && msg.changes && msg.changes.length > 0 && (
+                                <div className="mt-3 space-y-3">
+                                    {msg.changes.map((change, changeIndex) => (
+                                        <div key={changeIndex} className="bg-white rounded border border-gray-300 p-3">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div className="flex-1">
+                                                    <h5 className="font-medium text-sm text-gray-800 mb-1">
+                                                        {changeIndex + 1}. {change.title || `Improvement ${changeIndex + 1}`}
+                                                    </h5>
+                                                    <p className="text-xs text-gray-600 mb-2">
+                                                        {change.description}
+                                                    </p>
+                                                </div>
+                                                {change.status === 'pending' && (
+                                                    <div className="flex gap-1 ml-2">
+                                                        <button
+                                                            onClick={() => handleAcceptChange(changeIndex)}
+                                                            className="w-6 h-6 border border-gray-300 hover:bg-gray-50 text-gray-600 hover:text-green-600 rounded flex items-center justify-center transition-colors text-xs"
+                                                            title="Accept this improvement"
+                                                        >
+                                                            ✓
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleRejectChange(changeIndex)}
+                                                            className="w-6 h-6 border border-gray-300 hover:bg-gray-50 text-gray-600 hover:text-red-600 rounded flex items-center justify-center transition-colors text-xs"
+                                                            title="Reject this improvement"
+                                                        >
+                                                            ✕
+                                                        </button>
+                                                    </div>
+                                                )}
+                                                {change.status === 'accepted' && (
+                                                    <span className="text-xs text-green-600 font-medium ml-2">
+                                                        ✓ Accepted
+                                                    </span>
+                                                )}
+                                                {change.status === 'rejected' && (
+                                                    <span className="text-xs text-red-600 font-medium ml-2">
+                                                        ✕ Rejected
+                                                    </span>
+                                                )}
                                             </div>
 
-                                            {/* Show individual changes with individual action buttons */}
-                                            <div className="space-y-3">
-                                                {section.changes.map((change, changeIndex) => (
-                                                    <div key={changeIndex} className="border-t border-gray-100 pt-3 first:border-t-0 first:pt-0">
-                                                        <div className="flex justify-between items-start mb-2">
-                                                            <div className="flex-1">
-                                                                <h5 className="font-medium text-sm text-gray-800 mb-1">
-                                                                    {changeIndex + 1}. {change.title || `Improvement ${changeIndex + 1}`}
-                                                                </h5>
-                                                                <p className="text-xs text-gray-600 mb-2">
-                                                                    {change.description}
-                                                                </p>
-                                                            </div>
-                                                            {change.status === 'pending' && (
-                                                                <div className="flex gap-1 ml-2">
-                                                                    <button
-                                                                        onClick={() => handleAcceptChange(section.id, changeIndex)}
-                                                                        className="w-6 h-6 border border-gray-300 hover:bg-gray-50 text-gray-600 hover:text-green-600 rounded flex items-center justify-center transition-colors text-xs"
-                                                                        title="Accept this improvement"
-                                                                    >
-                                                                        ✓
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => handleRejectChange(section.id, changeIndex)}
-                                                                        className="w-6 h-6 border border-gray-300 hover:bg-gray-50 text-gray-600 hover:text-red-600 rounded flex items-center justify-center transition-colors text-xs"
-                                                                        title="Reject this improvement"
-                                                                    >
-                                                                        ✕
-                                                                    </button>
-                                                                </div>
-                                                            )}
-                                                            {change.status === 'accepted' && (
-                                                                <span className="text-xs text-green-600 font-medium ml-2">
-                                                                    ✓ Accepted
-                                                                </span>
-                                                            )}
-                                                            {change.status === 'rejected' && (
-                                                                <span className="text-xs text-red-600 font-medium ml-2">
-                                                                    ✕ Rejected
-                                                                </span>
-                                                            )}
-                                                        </div>
-
-                                                        {/* Text comparison */}
-                                                        <div className="text-xs bg-gray-50 p-2 rounded">
-                                                            <div className="text-gray-600">
-                                                                <span className="line-through text-red-500">
-                                                                    "{change.originalText || '...'}"
-                                                                </span>
-                                                                <span className="mx-1">→</span>
-                                                                <span className="text-green-600">
-                                                                    "{change.newText}"
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))}
+                                            {/* Text comparison */}
+                                            <div className="text-xs bg-gray-50 p-2 rounded">
+                                                <div className="text-gray-600">
+                                                    <span className="line-through text-red-500">
+                                                        "{change.originalText || '...'}"
+                                                    </span>
+                                                    <span className="mx-1">→</span>
+                                                    <span className="text-green-600">
+                                                        "{change.newText}"
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     ))}

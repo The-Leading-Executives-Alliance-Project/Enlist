@@ -12,19 +12,19 @@ const DocumentEditor = () => {
         { sender: 'ai', text: 'Hi! I am here to help you with your essay. Type your essay and ask me for improvements!' }
     ]);
     const [isLoading, setIsLoading] = useState(false);
-    const [suggestionSections, setSuggestionSections] = useState([]);
+    const [changes, setChanges] = useState([]);
     const [highlightedRanges, setHighlightedRanges] = useState([]);
 
     const textareaRef = useRef(null);
 
     // Apply text changes with position calculation using our algorithm
-    const applyTextChanges = (changes, baseText) => {
+    const applyTextChanges = (changesToApply, baseText) => {
         let newText = baseText;
         const newHighlights = [];
         let offset = 0; // Track cumulative position changes
 
         // Calculate positions first, then sort by position
-        const changesWithPositions = changes.map(change => {
+        const changesWithPositions = changesToApply.map(change => {
             const position = findTextPosition(baseText, change.originalText);
             return { ...change, position };
         }).filter(change => change.position !== null); // Remove changes where text wasn't found
@@ -50,7 +50,6 @@ const DocumentEditor = () => {
                 id: `highlight-${index}`,
                 start: adjustedStart,
                 end: adjustedStart + replacementText.length,
-                sectionId: change.sectionId,
                 changeIndex: index,
                 originalText: originalText,
                 newText: replacementText
@@ -75,77 +74,47 @@ const DocumentEditor = () => {
         };
     };
 
-    // Remove highlights for a specific section
-    const removeSectionHighlights = (sectionId) => {
-        setHighlightedRanges(prev => prev.filter(h => h.sectionId !== sectionId));
-    };
-
     // Accept an individual change
-    const handleAcceptChange = (sectionId, changeIndex) => {
-        console.log('Accepting change:', sectionId, changeIndex);
+    const handleAcceptChange = (changeIndex) => {
+        console.log('Accepting change:', changeIndex);
 
         // Update the specific change status
-        setSuggestionSections(prev =>
-            prev.map(section =>
-                section.id === sectionId
-                    ? {
-                        ...section,
-                        changes: section.changes.map((change, index) =>
-                            index === changeIndex
-                                ? { ...change, status: 'accepted' }
-                                : change
-                        )
-                    }
-                    : section
+        setChanges(prev =>
+            prev.map((change, index) =>
+                index === changeIndex
+                    ? { ...change, status: 'accepted' }
+                    : change
             )
         );
 
         // Remove highlights for this specific change
         setHighlightedRanges(prev =>
-            prev.filter(h => !(h.sectionId === sectionId && h.changeIndex === changeIndex))
+            prev.filter(h => h.changeIndex !== changeIndex)
         );
     };
 
     // Reject an individual change
-    const handleRejectChange = (sectionId, changeIndex) => {
-        console.log('Rejecting change:', sectionId, changeIndex);
+    const handleRejectChange = (changeIndex) => {
+        console.log('Rejecting change:', changeIndex);
 
-        const section = suggestionSections.find(s => s.id === sectionId);
-        if (!section) return;
-
-        const change = section.changes[changeIndex];
+        const change = changes[changeIndex];
         if (!change) return;
 
         console.log('Rejecting change:', change);
 
         // Update the specific change status
-        setSuggestionSections(prev =>
-            prev.map(section =>
-                section.id === sectionId
-                    ? {
-                        ...section,
-                        changes: section.changes.map((c, index) =>
-                            index === changeIndex
-                                ? { ...c, status: 'rejected' }
-                                : c
-                        )
-                    }
-                    : section
+        setChanges(prev =>
+            prev.map((c, index) =>
+                index === changeIndex
+                    ? { ...c, status: 'rejected' }
+                    : c
             )
         );
 
         // Get all remaining pending changes (excluding the rejected one)
-        const remainingChanges = suggestionSections
-            .flatMap(section =>
-                section.changes
-                    .filter((change, index) =>
-                        change.status === 'pending' &&
-                        !(section.id === sectionId && index === changeIndex)
-                    )
-                    .map(change => ({
-                        ...change,
-                        sectionId: section.id
-                    }))
+        const remainingChanges = changes
+            .filter((change, index) =>
+                change.status === 'pending' && index !== changeIndex
             );
 
         // Reapply all remaining changes from the original essay
@@ -242,38 +211,26 @@ Make sure the JSON is valid and properly formatted.`;
                 setEssay(data.message);
             }
 
-            // Create single suggestion section
-            const suggestionSection = {
-                id: 'ai-suggestions',
-                title: 'AI Improvements',
-                description: 'Improvements based on your request',
-                changes: changes.map((change, index) => ({
-                    newText: change.newText,
-                    title: change.title || `Improvement ${index + 1}`,
-                    description: change.description,
-                    originalText: change.originalText,
-                    status: 'pending' // Individual change status
-                })),
-                status: 'pending'
-            };
-
-            // Add section IDs to changes
-            const changesWithSectionIds = suggestionSection.changes.map(change => ({
-                ...change,
-                sectionId: suggestionSection.id
+            // Create changes array with proper structure
+            const changesWithStatus = changes.map((change, index) => ({
+                newText: change.newText,
+                title: change.title || `Improvement ${index + 1}`,
+                description: change.description,
+                originalText: change.originalText,
+                status: 'pending' // Individual change status
             }));
 
             // Apply all changes automatically using the current essay as the base
-            applyTextChanges(changesWithSectionIds, currentEssay);
+            applyTextChanges(changesWithStatus, currentEssay);
 
-            // Store suggestion section
-            setSuggestionSections([suggestionSection]);
+            // Store changes
+            setChanges(changesWithStatus);
 
             // Add AI response to chat
             const aiMessage = {
                 sender: 'ai',
                 text: aiResponse,
-                suggestionSections: [suggestionSection]
+                changes: changesWithStatus
             };
             setMessages(prev => [...prev, aiMessage]);
 
@@ -305,7 +262,7 @@ Make sure the JSON is valid and properly formatted.`;
                 essay={essay}
                 setEssay={setEssay}
                 highlightedRanges={highlightedRanges}
-                suggestionSections={suggestionSections}
+                changes={changes}
                 textareaRef={textareaRef}
                 getTitle={getTitle}
             />
@@ -314,7 +271,7 @@ Make sure the JSON is valid and properly formatted.`;
                 onSendMessage={handleSendMessage}
                 messages={messages}
                 isLoading={isLoading}
-                suggestionSections={suggestionSections}
+                changes={changes}
                 onAcceptChange={handleAcceptChange}
                 onRejectChange={handleRejectChange}
             />
