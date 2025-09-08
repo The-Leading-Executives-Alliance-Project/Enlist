@@ -12,10 +12,24 @@ const DocumentEditor = () => {
         { sender: 'ai', text: 'Hi! I am here to help you with your essay. Type your essay and ask me for improvements!' }
     ]);
     const [isLoading, setIsLoading] = useState(false);
-    const [changes, setChanges] = useState([]);
     const [highlightedRanges, setHighlightedRanges] = useState([]);
 
     const textareaRef = useRef(null);
+
+    // Helper function to get all pending changes from all messages
+    const getAllPendingChanges = () => {
+        return messages
+            .filter(msg => msg.sender === 'ai' && msg.changes)
+            .flatMap(msg => msg.changes)
+            .filter(change => change.status === 'pending');
+    };
+
+    // Helper function to get all changes from all messages
+    const getAllChanges = () => {
+        return messages
+            .filter(msg => msg.sender === 'ai' && msg.changes)
+            .flatMap(msg => msg.changes);
+    };
 
     // Apply text changes with position calculation using our algorithm
     const applyTextChanges = (changesToApply, baseText) => {
@@ -78,14 +92,39 @@ const DocumentEditor = () => {
     const handleAcceptChange = (changeIndex) => {
         console.log('Accepting change:', changeIndex);
 
-        // Update the specific change status
-        setChanges(prev =>
-            prev.map((change, index) =>
-                index === changeIndex
-                    ? { ...change, status: 'accepted' }
-                    : change
-            )
-        );
+        setMessages(prev => {
+            // Find the latest AI message with changes
+            let latestAiMessageIndex = -1;
+            for (let i = prev.length - 1; i >= 0; i--) {
+                if (prev[i].sender === 'ai' && prev[i].changes && prev[i].changes.length > 0) {
+                    latestAiMessageIndex = i;
+                    break;
+                }
+            }
+            
+            if (latestAiMessageIndex === -1) {
+                return prev;
+            }
+
+            const latestMessage = prev[latestAiMessageIndex];
+
+            // Update only the latest message's changes
+            const updatedChanges = latestMessage.changes.map((change, index) => {
+                if (index === changeIndex) {
+                    return { ...change, status: 'accepted' };
+                }
+                return change;
+            });
+
+            // Create new messages array with only the latest message updated
+            const newMessages = [...prev];
+            newMessages[latestAiMessageIndex] = {
+                ...latestMessage,
+                changes: updatedChanges
+            };
+
+            return newMessages;
+        });
 
         // Remove highlights for this specific change
         setHighlightedRanges(prev =>
@@ -97,34 +136,61 @@ const DocumentEditor = () => {
     const handleRejectChange = (changeIndex) => {
         console.log('Rejecting change:', changeIndex);
 
-        const change = changes[changeIndex];
-        if (!change) return;
+        setMessages(prev => {
+            // Find the latest AI message with changes
+            let latestAiMessageIndex = -1;
+            for (let i = prev.length - 1; i >= 0; i--) {
+                if (prev[i].sender === 'ai' && prev[i].changes && prev[i].changes.length > 0) {
+                    latestAiMessageIndex = i;
+                    break;
+                }
+            }
+            
+            if (latestAiMessageIndex === -1) {
+                return prev;
+            }
 
-        console.log('Rejecting change:', change);
+            const latestMessage = prev[latestAiMessageIndex];
 
-        // Update the specific change status
-        setChanges(prev =>
-            prev.map((c, index) =>
-                index === changeIndex
-                    ? { ...c, status: 'rejected' }
-                    : c
-            )
-        );
+            // Update only the latest message's changes
+            const updatedChanges = latestMessage.changes.map((change, index) => {
+                if (index === changeIndex) {
+                    return { ...change, status: 'rejected' };
+                }
+                return change;
+            });
 
-        // Get all remaining pending changes (excluding the rejected one)
-        const remainingChanges = changes
-            .filter((change, index) =>
-                change.status === 'pending' && index !== changeIndex
+            // Create new messages array with only the latest message updated
+            const newMessages = [...prev];
+            newMessages[latestAiMessageIndex] = {
+                ...latestMessage,
+                changes: updatedChanges
+            };
+
+            return newMessages;
+        });
+
+        // Remove the specific change from the current essay
+        const rejectedChange = messages
+            .filter(msg => msg.sender === 'ai' && msg.changes)
+            .flatMap(msg => msg.changes)
+            .find(change => change.changeIndex === changeIndex);
+        
+        if (rejectedChange) {
+            // Replace the new text with the original text in the current essay
+            const currentEssayText = essay;
+            const updatedEssayText = currentEssayText.replace(
+                rejectedChange.newText, 
+                rejectedChange.originalText
             );
-
-        // Reapply all remaining changes from the original essay
-        if (remainingChanges.length > 0) {
-            applyTextChanges(remainingChanges, originalEssay);
-        } else {
-            // No active changes, revert to original
-            setEssay(originalEssay);
-            setHighlightedRanges([]);
+            
+            setEssay(updatedEssayText);
         }
+
+        // Remove the highlight for this specific change
+        setHighlightedRanges(prev =>
+            prev.filter(h => h.changeIndex !== changeIndex)
+        );
     };
 
     const handleSendMessage = async (message) => {
@@ -223,8 +289,6 @@ Make sure the JSON is valid and properly formatted.`;
             // Apply all changes automatically using the current essay as the base
             applyTextChanges(changesWithStatus, currentEssay);
 
-            // Store changes
-            setChanges(changesWithStatus);
 
             // Add AI response to chat
             const aiMessage = {
@@ -262,7 +326,7 @@ Make sure the JSON is valid and properly formatted.`;
                 essay={essay}
                 setEssay={setEssay}
                 highlightedRanges={highlightedRanges}
-                changes={changes}
+                changes={getAllChanges()}
                 textareaRef={textareaRef}
                 getTitle={getTitle}
             />
@@ -271,7 +335,6 @@ Make sure the JSON is valid and properly formatted.`;
                 onSendMessage={handleSendMessage}
                 messages={messages}
                 isLoading={isLoading}
-                changes={changes}
                 onAcceptChange={handleAcceptChange}
                 onRejectChange={handleRejectChange}
             />

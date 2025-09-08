@@ -4,7 +4,6 @@ const DocumentChatbot = ({
     onSendMessage,
     messages = [],
     isLoading = false,
-    changes = [],
     onAcceptChange,
     onRejectChange
 }) => {
