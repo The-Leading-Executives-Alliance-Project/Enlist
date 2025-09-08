@@ -76,14 +76,18 @@ const DocumentChatbot = ({
                                                     </div>
                                                 )}
                                                 {change.status === 'accepted' && (
-                                                    <span className="text-xs text-green-600 font-medium ml-2">
-                                                        ✓ Accepted
-                                                    </span>
+                                                    <div className="flex gap-1 ml-2">
+                                                        <div className="w-6 h-6 border border-green-500 bg-green-100 text-green-600 rounded flex items-center justify-center text-xs">
+                                                            ✓
+                                                        </div>
+                                                    </div>
                                                 )}
                                                 {change.status === 'rejected' && (
-                                                    <span className="text-xs text-red-600 font-medium ml-2">
-                                                        ✕ Rejected
-                                                    </span>
+                                                    <div className="flex gap-1 ml-2">
+                                                        <div className="w-6 h-6 border border-red-500 bg-red-100 text-red-600 rounded flex items-center justify-center text-xs">
+                                                            ✕
+                                                        </div>
+                                                    </div>
                                                 )}
                                             </div>
 
