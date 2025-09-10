@@ -24,11 +24,15 @@ const DocumentEditor = () => {
             .filter(change => change.status === 'pending');
     };
 
-    // Helper function to get all changes from all messages
-    const getAllChanges = () => {
-        return messages
-            .filter(msg => msg.sender === 'ai' && msg.changes)
-            .flatMap(msg => msg.changes);
+    // Helper function to get changes from the latest AI message only
+    const getLatestChanges = () => {
+        // Find the latest AI message with changes
+        for (let i = messages.length - 1; i >= 0; i--) {
+            if (messages[i].sender === 'ai' && messages[i].changes && messages[i].changes.length > 0) {
+                return messages[i].changes;
+            }
+        }
+        return [];
     };
 
     // Apply text changes with position calculation using our algorithm
@@ -201,6 +205,45 @@ const DocumentEditor = () => {
             const userMessage = { sender: 'user', text: message };
             setMessages(prev => [...prev, userMessage]);
 
+            // Auto-reject any pending changes when user sends a new message
+            const pendingChanges = getAllPendingChanges();
+            if (pendingChanges.length > 0) {
+                console.log('Auto-rejecting pending changes:', pendingChanges.length);
+                
+                // Mark all pending changes as rejected
+                setMessages(prev =>
+                    prev.map(msg => {
+                        if (msg.sender === 'ai' && msg.changes) {
+                            const updatedChanges = msg.changes.map(change => {
+                                if (change.status === 'pending') {
+                                    return { ...change, status: 'rejected' };
+                                }
+                                return change;
+                            });
+                            return { ...msg, changes: updatedChanges };
+                        }
+                        return msg;
+                    })
+                );
+
+                // Remove only the pending changes from the essay, keep accepted ones
+                let updatedEssay = essay;
+                pendingChanges.forEach(change => {
+                    // Replace the new text with original text for rejected changes
+                    updatedEssay = updatedEssay.replace(change.newText, change.originalText);
+                });
+                setEssay(updatedEssay);
+
+                // Remove highlights for rejected changes only
+                setHighlightedRanges(prev =>
+                    prev.filter(h => {
+                        // Keep highlights for accepted changes, remove for rejected ones
+                        const change = pendingChanges.find(pc => pc.originalText === h.originalText);
+                        return !change; // Keep highlight if change is not in pending (rejected) list
+                    })
+                );
+            }
+
             // Store original essay before AI makes changes
             const currentEssay = essay;
             console.log('Storing original essay before AI changes:', currentEssay);
@@ -326,7 +369,7 @@ Make sure the JSON is valid and properly formatted.`;
                 essay={essay}
                 setEssay={setEssay}
                 highlightedRanges={highlightedRanges}
-                changes={getAllChanges()}
+                changes={getLatestChanges()}
                 textareaRef={textareaRef}
                 getTitle={getTitle}
             />
