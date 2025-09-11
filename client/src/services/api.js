@@ -110,112 +110,6 @@ export const AuthService = {
   }
 };
 
-// User Profile service
-export const UserProfileService = {
-  // Get current user's profile
-  getProfile: async () => {
-    try {
-      const response = await api.get('/userprofile/me');
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-  
-  // Create or update user profile
-  saveProfile: async (profileData) => {
-    try {
-      const response = await api.post('/userprofile', profileData);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-  
-  // Update specific profile fields
-  updateProfile: async (updates) => {
-    try {
-      const response = await api.patch('/userprofile', updates);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  }
-};
-
-// University service
-export const UniversityService = {
-  // Search universities
-  search: async (searchParams) => {
-    try {
-      const response = await api.get('/universities/search', { params: searchParams });
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-  
-  // Get all universities
-  getAll: async (params = {}) => {
-    try {
-      const response = await api.get('/universities', { params });
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-  
-  // Get university by ID
-  getById: async (id) => {
-    try {
-      const response = await api.get(`/universities/${id}`);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-  
-  // Create university (admin only)
-  create: async (universityData) => {
-    try {
-      const response = await api.post('/universities', universityData);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-  
-  // Update university (admin only)
-  update: async (id, universityData) => {
-    try {
-      const response = await api.put(`/universities/${id}`, universityData);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-  
-  // Delete university (admin only)
-  delete: async (id) => {
-    try {
-      const response = await api.delete(`/universities/${id}`);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-  
-  // Seed universities with sample data (admin only)
-  seed: async () => {
-    try {
-      const response = await api.post('/universities/seed');
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  }
-};
-
 // Applications service
 export const ApplicationService = {
   // Get all applications
@@ -273,5 +167,18 @@ export const ChatService = {
     return api.get('/chat/history');
   }
 };
+
+export const SearchService={
+  // Get all universities
+  getAllUniversities: async() => {
+    return api.get('/search');
+  },
+  
+  // Search universities with filters
+  search: async(searchData) => {
+    console.log('API Service - Search params:', searchData);
+    return api.get('/search/universities', { params: searchData });
+  }
+}
 
 export default api;

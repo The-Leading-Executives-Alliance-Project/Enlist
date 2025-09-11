@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { UserProfileService, UniversityService } from '../services/api';
+import React, { useState, useEffect } from 'react';
+import {SearchService} from '../services/api';
 import UniversityCard from '../components/UniversityCard';
+
 
 const Search = () => {
     const [searchData, setSearchData] = useState({
-        major: '',
-        country: '',
+        keyword:'',
+        discipline: '',
+        province: '',
         city: '',
         cost: '',
         other: ''
@@ -13,6 +15,27 @@ const Search = () => {
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
+
+   
+const loadUniversities = async() => {
+    setLoading(true);
+    try{
+        const response = await SearchService.getAllUniversities();
+        
+        const formattedData = formateData(response);
+    
+    setResults(formattedData);
+    }catch(error){
+        console.error('Error:', error);
+    } finally {
+        setLoading(false);
+    }
+}
+
+ // load data
+ useEffect(() => {
+    loadUniversities();
+}, []);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -23,15 +46,17 @@ const Search = () => {
     };
 
     const handleSearch = async (e) => {
+        console.log('🚀 BUTTON CLICKED!');
         e.preventDefault();
         setLoading(true);
         setMessage('');
 
         try {
-            // 使用真实的API调用搜索大学
-            const response = await UniversityService.search(searchData);
-            setResults(response.universities || []);
-            if ((response.universities || []).length === 0) {
+            console.log('🔍 Sending search query:', searchData);
+            const response = await SearchService.search(searchData);
+            const formatedData = formateData(response);
+            setResults(formatedData || []);
+            if ((response.data || []).length === 0) {
                 setMessage('No universities found matching your criteria.');
             }
         } catch (error) {
@@ -43,65 +68,20 @@ const Search = () => {
         }
     };
 
-    // Function to add sample data (for testing UI)
-    const addSampleData = () => {
-        setResults([
-            {
-                _id: '1',
-                program: 'Engineering',
-                university: 'York University',
-                location: 'Toronto, ON',
-                cost: '$11,256 / yr',
-                match: 78,
-                isNew: true,
-                website: 'http://yorku.ca'
-            },
-            {
-                _id: '2',
-                program: 'Commerce',
-                university: 'York University',
-                location: 'Toronto, ON',
-                cost: '$11,164 / yr',
-                match: 78,
-                isNew: true,
-                website: 'http://yorku.ca'
-            },
-            {
-                _id: '3',
-                program: 'Software Engineering',
-                university: 'University of Waterloo',
-                location: 'Waterloo, ON',
-                cost: '$20,500 / yr',
-                match: 78,
-                isNew: true,
-                website: 'http://uwaterloo.ca'
-            },
-            {
-                _id: '4',
-                program: 'Computer Science',
-                university: 'University of Toronto',
-                location: 'Toronto, ON',
-                cost: '$15,000 / yr',
-                match: 85,
-                isNew: false,
-                website: 'http://utoronto.ca'
-            },
-            {
-                _id: '5',
-                program: 'Business Administration',
-                university: 'Western University',
-                location: 'London, ON',
-                cost: '$18,000 / yr',
-                match: 72,
-                isNew: true,
-                website: 'http://uwo.ca'
-            }
-        ]);
-        setMessage('Sample data loaded successfully!');
-    };
+    const formateData =(resp) =>{
+        return resp.data.map(uni =>({
+            _id:uni._id,
+            program: uni.majors?.[0]?.name || 'N/A',
+            university: uni.name,
+            location: `${uni.city},${uni.province}`,
+            cost:uni.tuition?.domestic || 'N/A',
+            match: Math.floor(Math.random()*30)+70, // need to be determined???
+            isNew:Math.random() > 0.7, // need to be determined???
+            website: uni.website || '#'
+        }));
+    }
 
     const handleAddToCompare = (id) => {
-        console.log(`Add university ${id} to compare`);
         // TODO: Implement logic to add to compare list
         setMessage(`Added university ${id} to compare list`);
     };
@@ -121,10 +101,10 @@ const Search = () => {
                 </svg>
                 <input
                     type="text"
-                    placeholder="Search for universities, programs..."
+                    placeholder="Search by college name, location, or major"
                     className="flex-grow outline-none text-gray-700"
-                    value={searchData.major}
-                    onChange={(e) => setSearchData(prev => ({ ...prev, major: e.target.value }))}
+                    value={searchData.keyword}
+                    onChange={(e) => setSearchData(prev => ({ ...prev, keyword: e.target.value }))}
                 />
             </div>
 
@@ -132,8 +112,8 @@ const Search = () => {
             <div className="flex flex-wrap gap-4 mb-6">
                 <div className="relative inline-block text-left">
                     <select
-                        name="major"
-                        value={searchData.major}
+                        name="discipline"
+                        value={searchData.discipline}
                         onChange={handleInputChange}
                         className="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     >
@@ -149,8 +129,8 @@ const Search = () => {
                 </div>
                 <div className="relative inline-block text-left">
                     <select
-                        name="country"
-                        value={searchData.country}
+                        name="province"
+                        value={searchData.province}
                         onChange={handleInputChange}
                         className="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     >
@@ -211,21 +191,17 @@ const Search = () => {
                 </div>
             </div>
 
-            {/* Search Button and Sample Data Button */}
+            {/* Search Button */}
             <div className="flex space-x-4 mb-6">
                 <button
                     onClick={handleSearch}
                     className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md shadow-md transition-colors"
                     disabled={loading}
+                    style={{cursor: loading ? 'not-allowed' : 'pointer'}}
                 >
                     {loading ? 'Searching...' : 'Search Universities'}
                 </button>
-                <button
-                    onClick={addSampleData}
-                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-md shadow-md transition-colors"
-                >
-                    Add Sample Data
-                </button>
+            
             </div>
 
             {/* Message Area */}
@@ -261,8 +237,8 @@ const Search = () => {
                             <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                             </svg>
-                            <p className="text-gray-500 text-lg">Start by searching or adding sample data.</p>
-                            <p className="text-gray-400 text-sm mt-2">Use the search bar above or click "Add Sample Data" to see results.</p>
+                            <p className="text-gray-500 text-lg">No universities found.</p>
+                            <p className="text-gray-400 text-sm mt-2">Try adjusting your search criteria.</p>
                         </div>
                     )
                 )}

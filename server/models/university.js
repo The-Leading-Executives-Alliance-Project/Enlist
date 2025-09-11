@@ -13,6 +13,11 @@ const universitySchema = new Schema({
     required: true,
     trim: true
   },
+  province:{
+    type: String,
+    required: true,
+    trim: true
+  },
   city: {
     type: String,
     trim: true
@@ -57,7 +62,6 @@ const universitySchema = new Schema({
   timestamps: true 
 });
 
-// Add text index for search functionality
 universitySchema.index({
   name: 'text',
   country: 'text',
