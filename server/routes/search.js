@@ -6,6 +6,7 @@ const University = require('../models/university');
 router.get('/', async (req, res) => {
   try {
     const universities = await University.find({});
+    console.log('9', universities);
     res.json(universities);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -22,11 +23,11 @@ router.get('/universities', async(req,res) =>{
       // 方法1: 使用MongoDB全文搜索，确保包含所有词
       const searchTerms = keyword.split(' ').map(term => `"${term}"`).join(' ');
       query.$text = {$search: searchTerms};     
-      console.log('🔤 Keyword search with all terms:', searchTerms);
+      console.log('Keyword search with all terms:', searchTerms);
     }
     if(discipline){
       query['majors.name'] = { $regex: discipline, $options: 'i' };
-      console.log('🎓 Added discipline filter (searching in majors.name):', discipline);
+      
     }
     if(province){
       query.province = province;
