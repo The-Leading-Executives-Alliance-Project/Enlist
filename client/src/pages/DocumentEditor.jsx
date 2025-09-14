@@ -13,8 +13,119 @@ const DocumentEditor = () => {
     ]);
     const [isLoading, setIsLoading] = useState(false);
     const [highlightedRanges, setHighlightedRanges] = useState([]);
+    const [isSaving, setIsSaving] = useState(false);
+    const [lastSaved, setLastSaved] = useState(null);
 
     const textareaRef = useRef(null);
+
+    // Load document when component mounts
+    useEffect(() => {
+        const loadDocument = async () => {
+            try {
+                const response = await fetch(`/api/documents/${essayId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setEssay(data.essay);
+                    setMessages(data.messages);
+                    setHighlightedRanges(data.highlightedRanges || []);
+                    // Set initial saved content to prevent immediate save
+                    setLastSavedContent(JSON.stringify({ essay: data.essay, messages: data.messages, highlightedRanges: data.highlightedRanges || [] }));
+                    setHasUnsavedChanges(false);
+                    hasUnsavedChangesRef.current = false;
+                }
+            } catch (error) {
+                console.error('Error loading document:', error);
+            }
+        };
+
+        loadDocument();
+    }, [essayId]);
+
+    // Change detection and auto-save functionality
+    const [lastSavedContent, setLastSavedContent] = useState('');
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+    const hasUnsavedChangesRef = useRef(false);
+
+    // Auto-save effect with change detection
+    useEffect(() => {
+        const saveDocument = async () => {
+            if (essay.trim() === '' && messages.length <= 1) return; // Don't save empty documents
+            
+            const token = localStorage.getItem('token');
+            if (!token) {
+                console.error('No authentication token found');
+                return;
+            }
+            
+            console.log('Attempting to save document with token:', token.substring(0, 20) + '...');
+            
+            setIsSaving(true);
+            try {
+                const response = await fetch('/api/documents/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        essayId,
+                        essay,
+                        messages,
+                        highlightedRanges
+                    })
+                });
+
+                if (response.ok) {
+                    setLastSaved(new Date());
+                    setHasUnsavedChanges(false);
+                    hasUnsavedChangesRef.current = false;
+                    console.log('Document saved successfully');
+                } else {
+                    console.error('Save failed:', response.status, response.statusText);
+                    if (response.status === 401) {
+                        console.error('Authentication failed. Token might be expired.');
+                        // Optionally redirect to login
+                        // window.location.href = '/login';
+                    }
+                }
+            } catch (error) {
+                console.error('Error saving document:', error);
+            } finally {
+                setIsSaving(false);
+            }
+        };
+
+        // Create content hash to detect changes
+        const currentContent = JSON.stringify({ essay, messages, highlightedRanges });
+        
+        // Skip save if content hasn't changed
+        if (currentContent === lastSavedContent) {
+            return;
+        }
+        
+        // Mark as having unsaved changes
+        setHasUnsavedChanges(true);
+        hasUnsavedChangesRef.current = true;
+        
+        // Debounced save: wait 10 seconds after user stops making changes
+        const saveTimeout = setTimeout(() => {
+            saveDocument();
+            setLastSavedContent(currentContent);
+        }, 10000);
+
+        // Save when component unmounts
+        return () => {
+            clearTimeout(saveTimeout);
+            if (hasUnsavedChangesRef.current) {
+                saveDocument(); // Final save if there are unsaved changes
+            }
+        };
+    }, [essay, messages, highlightedRanges, essayId]);
 
     // Helper function to get all pending changes from all messages
     const getAllPendingChanges = () => {
@@ -381,6 +492,25 @@ Make sure the JSON is valid and properly formatted.`;
                 onAcceptChange={handleAcceptChange}
                 onRejectChange={handleRejectChange}
             />
+            
+            {/* Save status indicators */}
+            {isSaving && (
+                <div className="fixed bottom-4 right-4 bg-blue-100 text-blue-800 px-3 py-2 rounded-lg shadow-lg">
+                    Saving...
+                </div>
+            )}
+
+            {hasUnsavedChanges && !isSaving && (
+                <div className="fixed bottom-4 right-4 bg-amber-100 text-amber-800 px-3 py-2 rounded-lg shadow-lg">
+                    Unsaved changes
+                </div>
+            )}
+
+            {lastSaved && !hasUnsavedChanges && !isSaving && (
+                <div className="fixed bottom-4 right-4 bg-green-100 text-green-800 px-3 py-2 rounded-lg shadow-lg">
+                    Saved at {lastSaved.toLocaleTimeString()}
+                </div>
+            )}
         </div>
     );
 };

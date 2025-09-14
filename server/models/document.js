@@ -7,31 +7,61 @@ const documentSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
-  filename: {
+  fileCategory: {
     type: String,
     required: true,
+    // Can be school name (UBC, SFU, Sauder, Beedie) or 'personal'
   },
-  originalName: {
+  documentName: {
     type: String,
     required: true,
+    // e.g., "Personal Statement", "Why UBC", "Why Sauder"
   },
-  mimetype: {
+  essay: {
     type: String,
-    required: true,
+    default: '',
   },
-  path: {
-    type: String,
-    required: true,
-  },
-  uploadDate: {
+  highlightedRanges: [{
+    start: Number,
+    end: Number,
+    changeIndex: Number,
+    messageIndex: Number,
+  }],
+  messages: [{
+    sender: {
+      type: String,
+      enum: ['user', 'ai'],
+      required: true,
+    },
+    text: {
+      type: String,
+      required: true,
+    },
+    changes: [{
+      originalText: String,
+      newText: String,
+      title: String,
+      description: String,
+      status: {
+        type: String,
+        enum: ['pending', 'accepted', 'rejected'],
+        default: 'pending',
+      },
+    }],
+    timestamp: {
+      type: Date,
+      default: Date.now,
+    },
+  }],
+  lastModified: {
     type: Date,
     default: Date.now,
   },
-  status: {
-    type: String,
-    enum: ['pending', 'verified', 'rejected'],
-    default: 'pending',
-  },
+}, {
+  timestamps: true,
 });
+
+// Create compound index to ensure one document per user per document type
+documentSchema.index({ userId: 1, fileCategory: 1, documentName: 1 }, { unique: true });
 
 module.exports = mongoose.model('Document', documentSchema);
