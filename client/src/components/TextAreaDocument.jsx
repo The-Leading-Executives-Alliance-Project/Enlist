@@ -6,10 +6,12 @@ const TextAreaDocument = ({
     essay,
     setEssay,
     highlightedRanges,
-    suggestionSections,
+    changes,
     textareaRef,
     getTitle
 }) => {
+    // Check if there are any pending changes
+    const hasPendingChanges = changes.some(change => change.status === 'pending');
     const quillRef = useRef(null);
     const quillInstanceRef = useRef(null);
 
@@ -38,6 +40,17 @@ const TextAreaDocument = ({
             }
         }
     }, []);
+
+    // Enable/disable editor based on pending changes
+    useEffect(() => {
+        if (quillInstanceRef.current) {
+            if (hasPendingChanges) {
+                quillInstanceRef.current.enable(false);
+            } else {
+                quillInstanceRef.current.enable(true);
+            }
+        }
+    }, [hasPendingChanges]);
 
     // Update content when essay changes (from AI suggestions)
     useEffect(() => {
@@ -95,13 +108,27 @@ const TextAreaDocument = ({
 
     return (
         <div className="flex-1 bg-white rounded-xl shadow p-6 flex flex-col">
-            <h2 className="text-xl font-bold mb-4 text-gray-900">{getTitle()}</h2>
+            <div className="flex items-center gap-3 mb-4">
+                <h2 className="text-xl font-bold text-gray-900">{getTitle()}</h2>
+                {hasPendingChanges && (
+                    <div className="flex items-center gap-2 px-3 py-1 bg-amber-100 border border-amber-300 rounded-full">
+                        <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
+                        <span className="text-sm font-medium text-amber-800">
+                            Review AI suggestions
+                        </span>
+                    </div>
+                )}
+            </div>
 
             {/* Quill editor */}
             <div className="flex-1 relative">
                 <div
                     ref={quillRef}
-                    className="flex-1 w-full min-h-[400px] border border-gray-200 rounded-lg bg-gray-50"
+                    className={`flex-1 w-full min-h-[400px] border rounded-lg ${
+                        hasPendingChanges 
+                            ? 'border-amber-300 bg-gray-50 cursor-not-allowed' 
+                            : 'border-gray-200 bg-gray-50'
+                    }`}
                     style={{
                         fontFamily: 'inherit',
                         fontSize: '1.125rem',
@@ -110,22 +137,22 @@ const TextAreaDocument = ({
                 />
             </div>
 
-            {/* Show which sections have pending changes */}
-            {suggestionSections.length > 0 && (
+            {/* Show which changes have pending status */}
+            {changes.length > 0 && (
                 <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <div className="text-sm font-medium text-blue-800 mb-2">
-                        AI Suggestions Applied ({suggestionSections.filter(s => s.status === 'pending').length} pending)
+                        AI Changes Applied ({changes.filter(c => c.status === 'pending').length} pending)
                     </div>
                     <div className="space-y-1">
-                        {suggestionSections.map(section => (
-                            <div key={section.id} className="flex items-center justify-between text-xs">
-                                <span className="text-blue-700">{section.title}</span>
-                                <span className={`px-2 py-1 rounded ${section.status === 'pending' ? 'bg-blue-200 text-blue-800' :
-                                    section.status === 'accepted' ? 'bg-green-200 text-green-800' :
+                        {changes.map((change, index) => (
+                            <div key={index} className="flex items-center justify-between text-xs">
+                                <span className="text-blue-700">{change.title || `Change ${index + 1}`}</span>
+                                <span className={`px-2 py-1 rounded ${change.status === 'pending' ? 'bg-blue-200 text-blue-800' :
+                                    change.status === 'accepted' ? 'bg-green-200 text-green-800' :
                                         'bg-red-200 text-red-800'
                                     }`}>
-                                    {section.status === 'pending' ? 'Pending' :
-                                        section.status === 'accepted' ? 'Accepted' : 'Rejected'}
+                                    {change.status === 'pending' ? 'Pending' :
+                                        change.status === 'accepted' ? 'Accepted' : 'Rejected'}
                                 </span>
                             </div>
                         ))}

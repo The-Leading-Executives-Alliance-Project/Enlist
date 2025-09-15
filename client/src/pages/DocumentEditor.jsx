@@ -12,19 +12,148 @@ const DocumentEditor = () => {
         { sender: 'ai', text: 'Hi! I am here to help you with your essay. Type your essay and ask me for improvements!' }
     ]);
     const [isLoading, setIsLoading] = useState(false);
-    const [suggestionSections, setSuggestionSections] = useState([]);
     const [highlightedRanges, setHighlightedRanges] = useState([]);
+    const [isSaving, setIsSaving] = useState(false);
+    const [lastSaved, setLastSaved] = useState(null);
 
     const textareaRef = useRef(null);
 
+    // Load document when component mounts
+    useEffect(() => {
+        const loadDocument = async () => {
+            try {
+                const response = await fetch(`/api/documents/${essayId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setEssay(data.essay);
+                    setMessages(data.messages);
+                    setHighlightedRanges(data.highlightedRanges || []);
+                    // Set initial saved content to prevent immediate save
+                    setLastSavedContent(JSON.stringify({ essay: data.essay, messages: data.messages, highlightedRanges: data.highlightedRanges || [] }));
+                    setHasUnsavedChanges(false);
+                    hasUnsavedChangesRef.current = false;
+                }
+            } catch (error) {
+                console.error('Error loading document:', error);
+            }
+        };
+
+        loadDocument();
+    }, [essayId]);
+
+    // Change detection and auto-save functionality
+    const [lastSavedContent, setLastSavedContent] = useState('');
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+    const hasUnsavedChangesRef = useRef(false);
+
+    // Auto-save effect with change detection
+    useEffect(() => {
+        const saveDocument = async () => {
+            if (essay.trim() === '' && messages.length <= 1) return; // Don't save empty documents
+            
+            const token = localStorage.getItem('token');
+            if (!token) {
+                console.error('No authentication token found');
+                return;
+            }
+            
+            console.log('Attempting to save document with token:', token.substring(0, 20) + '...');
+            
+            setIsSaving(true);
+            try {
+                const response = await fetch('/api/documents/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        essayId,
+                        essay,
+                        messages,
+                        highlightedRanges
+                    })
+                });
+
+                if (response.ok) {
+                    setLastSaved(new Date());
+                    setHasUnsavedChanges(false);
+                    hasUnsavedChangesRef.current = false;
+                    console.log('Document saved successfully');
+                } else {
+                    console.error('Save failed:', response.status, response.statusText);
+                    if (response.status === 401) {
+                        console.error('Authentication failed. Token might be expired.');
+                        // Optionally redirect to login
+                        // window.location.href = '/login';
+                    }
+                }
+            } catch (error) {
+                console.error('Error saving document:', error);
+            } finally {
+                setIsSaving(false);
+            }
+        };
+
+        // Create content hash to detect changes
+        const currentContent = JSON.stringify({ essay, messages, highlightedRanges });
+        
+        // Skip save if content hasn't changed
+        if (currentContent === lastSavedContent) {
+            return;
+        }
+        
+        // Mark as having unsaved changes
+        setHasUnsavedChanges(true);
+        hasUnsavedChangesRef.current = true;
+        
+        // Debounced save: wait 10 seconds after user stops making changes
+        const saveTimeout = setTimeout(() => {
+            saveDocument();
+            setLastSavedContent(currentContent);
+        }, 10000);
+
+        // Save when component unmounts
+        return () => {
+            clearTimeout(saveTimeout);
+            if (hasUnsavedChangesRef.current) {
+                saveDocument(); // Final save if there are unsaved changes
+            }
+        };
+    }, [essay, messages, highlightedRanges, essayId]);
+
+    // Helper function to get all pending changes from all messages
+    const getAllPendingChanges = () => {
+        return messages
+            .filter(msg => msg.sender === 'ai' && msg.changes)
+            .flatMap(msg => msg.changes)
+            .filter(change => change.status === 'pending');
+    };
+
+    // Helper function to get changes from the latest AI message only
+    const getLatestChanges = () => {
+        // Find the latest AI message with changes
+        for (let i = messages.length - 1; i >= 0; i--) {
+            if (messages[i].sender === 'ai' && messages[i].changes && messages[i].changes.length > 0) {
+                return messages[i].changes;
+            }
+        }
+        return [];
+    };
+
     // Apply text changes with position calculation using our algorithm
-    const applyTextChanges = (changes, baseText) => {
+    const applyTextChanges = (changesToApply, baseText) => {
         let newText = baseText;
         const newHighlights = [];
         let offset = 0; // Track cumulative position changes
 
         // Calculate positions first, then sort by position
-        const changesWithPositions = changes.map(change => {
+        const changesWithPositions = changesToApply.map(change => {
             const position = findTextPosition(baseText, change.originalText);
             return { ...change, position };
         }).filter(change => change.position !== null); // Remove changes where text wasn't found
@@ -50,7 +179,6 @@ const DocumentEditor = () => {
                 id: `highlight-${index}`,
                 start: adjustedStart,
                 end: adjustedStart + replacementText.length,
-                sectionId: change.sectionId,
                 changeIndex: index,
                 originalText: originalText,
                 newText: replacementText
@@ -75,87 +203,109 @@ const DocumentEditor = () => {
         };
     };
 
-    // Remove highlights for a specific section
-    const removeSectionHighlights = (sectionId) => {
-        setHighlightedRanges(prev => prev.filter(h => h.sectionId !== sectionId));
-    };
-
     // Accept an individual change
-    const handleAcceptChange = (sectionId, changeIndex) => {
-        console.log('Accepting change:', sectionId, changeIndex);
+    const handleAcceptChange = (changeIndex) => {
+        console.log('Accepting change:', changeIndex);
 
-        // Update the specific change status
-        setSuggestionSections(prev =>
-            prev.map(section =>
-                section.id === sectionId
-                    ? {
-                        ...section,
-                        changes: section.changes.map((change, index) =>
-                            index === changeIndex
-                                ? { ...change, status: 'accepted' }
-                                : change
-                        )
-                    }
-                    : section
-            )
-        );
+        setMessages(prev => {
+            // Find the latest AI message with changes
+            let latestAiMessageIndex = -1;
+            for (let i = prev.length - 1; i >= 0; i--) {
+                if (prev[i].sender === 'ai' && prev[i].changes && prev[i].changes.length > 0) {
+                    latestAiMessageIndex = i;
+                    break;
+                }
+            }
+            
+            if (latestAiMessageIndex === -1) {
+                return prev;
+            }
+
+            const latestMessage = prev[latestAiMessageIndex];
+
+            // Update only the latest message's changes
+            const updatedChanges = latestMessage.changes.map((change, index) => {
+                if (index === changeIndex) {
+                    return { ...change, status: 'accepted' };
+                }
+                return change;
+            });
+
+            // Create new messages array with only the latest message updated
+            const newMessages = [...prev];
+            newMessages[latestAiMessageIndex] = {
+                ...latestMessage,
+                changes: updatedChanges
+            };
+
+            return newMessages;
+        });
 
         // Remove highlights for this specific change
         setHighlightedRanges(prev =>
-            prev.filter(h => !(h.sectionId === sectionId && h.changeIndex === changeIndex))
+            prev.filter(h => h.changeIndex !== changeIndex)
         );
     };
 
     // Reject an individual change
-    const handleRejectChange = (sectionId, changeIndex) => {
-        console.log('Rejecting change:', sectionId, changeIndex);
+    const handleRejectChange = (changeIndex) => {
+        console.log('Rejecting change:', changeIndex);
 
-        const section = suggestionSections.find(s => s.id === sectionId);
-        if (!section) return;
+        setMessages(prev => {
+            // Find the latest AI message with changes
+            let latestAiMessageIndex = -1;
+            for (let i = prev.length - 1; i >= 0; i--) {
+                if (prev[i].sender === 'ai' && prev[i].changes && prev[i].changes.length > 0) {
+                    latestAiMessageIndex = i;
+                    break;
+                }
+            }
+            
+            if (latestAiMessageIndex === -1) {
+                return prev;
+            }
 
-        const change = section.changes[changeIndex];
-        if (!change) return;
+            const latestMessage = prev[latestAiMessageIndex];
 
-        console.log('Rejecting change:', change);
+            // Update only the latest message's changes
+            const updatedChanges = latestMessage.changes.map((change, index) => {
+                if (index === changeIndex) {
+                    return { ...change, status: 'rejected' };
+                }
+                return change;
+            });
 
-        // Update the specific change status
-        setSuggestionSections(prev =>
-            prev.map(section =>
-                section.id === sectionId
-                    ? {
-                        ...section,
-                        changes: section.changes.map((c, index) =>
-                            index === changeIndex
-                                ? { ...c, status: 'rejected' }
-                                : c
-                        )
-                    }
-                    : section
-            )
-        );
+            // Create new messages array with only the latest message updated
+            const newMessages = [...prev];
+            newMessages[latestAiMessageIndex] = {
+                ...latestMessage,
+                changes: updatedChanges
+            };
 
-        // Get all remaining pending changes (excluding the rejected one)
-        const remainingChanges = suggestionSections
-            .flatMap(section =>
-                section.changes
-                    .filter((change, index) =>
-                        change.status === 'pending' &&
-                        !(section.id === sectionId && index === changeIndex)
-                    )
-                    .map(change => ({
-                        ...change,
-                        sectionId: section.id
-                    }))
+            return newMessages;
+        });
+
+        // Remove the specific change from the current essay
+        const rejectedChange = messages
+            .filter(msg => msg.sender === 'ai' && msg.changes)
+            .flatMap(msg => msg.changes)
+            .find(change => change.changeIndex === changeIndex);
+        
+        if (rejectedChange) {
+            // Replace the new text with the original text in the current essay
+            const currentEssayText = essay;
+            const updatedEssayText = currentEssayText.replace(
+                rejectedChange.newText, 
+                rejectedChange.originalText
             );
-
-        // Reapply all remaining changes from the original essay
-        if (remainingChanges.length > 0) {
-            applyTextChanges(remainingChanges, originalEssay);
-        } else {
-            // No active changes, revert to original
-            setEssay(originalEssay);
-            setHighlightedRanges([]);
+            
+            setEssay(updatedEssayText);
         }
+
+        // Remove the highlight for this specific change
+        setHighlightedRanges(prev =>
+            prev.filter(h => h.changeIndex !== changeIndex)
+        );
     };
 
     const handleSendMessage = async (message) => {
@@ -165,6 +315,45 @@ const DocumentEditor = () => {
             // Add user message to chat
             const userMessage = { sender: 'user', text: message };
             setMessages(prev => [...prev, userMessage]);
+
+            // Auto-reject any pending changes when user sends a new message
+            const pendingChanges = getAllPendingChanges();
+            if (pendingChanges.length > 0) {
+                console.log('Auto-rejecting pending changes:', pendingChanges.length);
+                
+                // Mark all pending changes as rejected
+                setMessages(prev =>
+                    prev.map(msg => {
+                        if (msg.sender === 'ai' && msg.changes) {
+                            const updatedChanges = msg.changes.map(change => {
+                                if (change.status === 'pending') {
+                                    return { ...change, status: 'rejected' };
+                                }
+                                return change;
+                            });
+                            return { ...msg, changes: updatedChanges };
+                        }
+                        return msg;
+                    })
+                );
+
+                // Remove only the pending changes from the essay, keep accepted ones
+                let updatedEssay = essay;
+                pendingChanges.forEach(change => {
+                    // Replace the new text with original text for rejected changes
+                    updatedEssay = updatedEssay.replace(change.newText, change.originalText);
+                });
+                setEssay(updatedEssay);
+
+                // Remove highlights for rejected changes only
+                setHighlightedRanges(prev =>
+                    prev.filter(h => {
+                        // Keep highlights for accepted changes, remove for rejected ones
+                        const change = pendingChanges.find(pc => pc.originalText === h.originalText);
+                        return !change; // Keep highlight if change is not in pending (rejected) list
+                    })
+                );
+            }
 
             // Store original essay before AI makes changes
             const currentEssay = essay;
@@ -242,38 +431,24 @@ Make sure the JSON is valid and properly formatted.`;
                 setEssay(data.message);
             }
 
-            // Create single suggestion section
-            const suggestionSection = {
-                id: 'ai-suggestions',
-                title: 'AI Improvements',
-                description: 'Improvements based on your request',
-                changes: changes.map((change, index) => ({
-                    newText: change.newText,
-                    title: change.title || `Improvement ${index + 1}`,
-                    description: change.description,
-                    originalText: change.originalText,
-                    status: 'pending' // Individual change status
-                })),
-                status: 'pending'
-            };
-
-            // Add section IDs to changes
-            const changesWithSectionIds = suggestionSection.changes.map(change => ({
-                ...change,
-                sectionId: suggestionSection.id
+            // Create changes array with proper structure
+            const changesWithStatus = changes.map((change, index) => ({
+                newText: change.newText,
+                title: change.title || `Improvement ${index + 1}`,
+                description: change.description,
+                originalText: change.originalText,
+                status: 'pending' // Individual change status
             }));
 
             // Apply all changes automatically using the current essay as the base
-            applyTextChanges(changesWithSectionIds, currentEssay);
+            applyTextChanges(changesWithStatus, currentEssay);
 
-            // Store suggestion section
-            setSuggestionSections([suggestionSection]);
 
             // Add AI response to chat
             const aiMessage = {
                 sender: 'ai',
                 text: aiResponse,
-                suggestionSections: [suggestionSection]
+                changes: changesWithStatus
             };
             setMessages(prev => [...prev, aiMessage]);
 
@@ -305,7 +480,7 @@ Make sure the JSON is valid and properly formatted.`;
                 essay={essay}
                 setEssay={setEssay}
                 highlightedRanges={highlightedRanges}
-                suggestionSections={suggestionSections}
+                changes={getLatestChanges()}
                 textareaRef={textareaRef}
                 getTitle={getTitle}
             />
@@ -314,10 +489,28 @@ Make sure the JSON is valid and properly formatted.`;
                 onSendMessage={handleSendMessage}
                 messages={messages}
                 isLoading={isLoading}
-                suggestionSections={suggestionSections}
                 onAcceptChange={handleAcceptChange}
                 onRejectChange={handleRejectChange}
             />
+            
+            {/* Save status indicators */}
+            {isSaving && (
+                <div className="fixed bottom-4 right-4 bg-blue-100 text-blue-800 px-3 py-2 rounded-lg shadow-lg">
+                    Saving...
+                </div>
+            )}
+
+            {hasUnsavedChanges && !isSaving && (
+                <div className="fixed bottom-4 right-4 bg-amber-100 text-amber-800 px-3 py-2 rounded-lg shadow-lg">
+                    Unsaved changes
+                </div>
+            )}
+
+            {lastSaved && !hasUnsavedChanges && !isSaving && (
+                <div className="fixed bottom-4 right-4 bg-green-100 text-green-800 px-3 py-2 rounded-lg shadow-lg">
+                    Saved at {lastSaved.toLocaleTimeString()}
+                </div>
+            )}
         </div>
     );
 };
