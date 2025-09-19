@@ -168,4 +168,32 @@ export const ChatService = {
   }
 };
 
+// Experience service
+export const ExperienceService = {
+  // Get all experiences for current user
+  getAll: async () => {
+    return api.get('/userprofile/me');
+  },
+  
+  // Add a new experience
+  add: async (experienceData) => {
+    return api.post('/userprofile/experiences', experienceData);
+  },
+  
+  // Update an existing experience
+  update: async (experienceId, experienceData) => {
+    return api.put(`/userprofile/experiences/${experienceId}`, experienceData);
+  },
+  
+  // Delete an experience
+  delete: async (experienceId) => {
+    return api.delete(`/userprofile/experiences/${experienceId}`);
+  },
+  
+  // Update entire experiences array (for bulk operations)
+  updateAll: async (experiences) => {
+    return api.post('/userprofile', { experiences });
+  }
+};
+
 export default api;
