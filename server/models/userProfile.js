@@ -34,6 +34,25 @@ const userProfileSchema = new Schema({
   actReading: String,
   actScience: String,
   englishTest: String,
+  experiences: [{
+    organization: { type: String, required: true },
+    coreValues: { 
+      type: [String], 
+      required: true, 
+      validate: {
+        validator: function(v) {
+          return v.length <= 2 && v.length > 0;
+        },
+        message: 'Must select 1-2 core values'
+      },
+      enum: ['Authenticity', 'Curiosity', 'Empathy', 'Leadership', 'Resilience/Growth', 'Responsibility', 'Social Change', 'Courage', 'Collaboration', 'Purpose']
+    },
+    startDate: { type: String, required: true },
+    endDate: String,
+    current: { type: Boolean, default: false },
+    description: String,
+    location: String
+  }]
 }, { timestamps: true });
 
 module.exports = mongoose.model('UserProfile', userProfileSchema); 
