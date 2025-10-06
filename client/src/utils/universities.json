@@ -1,0 +1,464 @@
+{
+    "universities": [
+      {
+        "name": "University of Toronto",
+        "country": "Canada",
+        "province": "Ontario"
+      },
+      {
+        "name": "University of British Columbia",
+        "country": "Canada",
+        "province": "British Columbia"
+      },
+      {
+        "name": "McGill University",
+        "country": "Canada",
+        "province": "Quebec"
+      },
+      {
+        "name": "University of Alberta",
+        "country": "Canada",
+        "province": "Alberta"
+      },
+      {
+        "name": "McMaster University",
+        "country": "Canada",
+        "province": "Ontario"
+      },
+      {
+        "name": "Université de Montréal",
+        "country": "Canada",
+        "province": "Quebec"
+      },
+      {
+        "name": "University of Calgary",
+        "country": "Canada",
+        "province": "Alberta"
+      },
+      {
+        "name": "University of Ottawa",
+        "country": "Canada",
+        "province": "Ontario"
+      },
+      {
+        "name": "Western University",
+        "country": "Canada",
+        "province": "Ontario"
+      },
+      {
+        "name": "Queen's University",
+        "country": "Canada",
+        "province": "Ontario"
+      },
+      {
+        "name": "Simon Fraser University",
+        "country": "Canada",
+        "province": "British Columbia"
+      },
+      {
+        "name": "Dalhousie University",
+        "country": "Canada",
+        "province": "Nova Scotia"
+      },
+      {
+        "name": "University of Manitoba",
+        "country": "Canada",
+        "province": "Manitoba"
+      },
+      {
+        "name": "University of Saskatchewan",
+        "country": "Canada",
+        "province": "Saskatchewan"
+      },
+      {
+        "name": "Carleton University",
+        "country": "Canada",
+        "province": "Ontario"
+      },
+      {
+        "name": "Concordia University",
+        "country": "Canada",
+        "province": "Quebec"
+      },
+      {
+        "name": "University of Victoria",
+        "country": "Canada",
+        "province": "British Columbia"
+      },
+      {
+        "name": "York University",
+        "country": "Canada",
+        "province": "Ontario"
+      },
+      {
+        "name": "Ryerson University",
+        "country": "Canada",
+        "province": "Ontario"
+      },
+      {
+        "name": "University of Waterloo",
+        "country": "Canada",
+        "province": "Ontario"
+      },
+      {
+        "name": "Memorial University of Newfoundland",
+        "country": "Canada",
+        "province": "Newfoundland and Labrador"
+      },
+      {
+        "name": "University of New Brunswick",
+        "country": "Canada",
+        "province": "New Brunswick"
+      },
+      {
+        "name": "University of Prince Edward Island",
+        "country": "Canada",
+        "province": "Prince Edward Island"
+      },
+      {
+        "name": "Université Laval",
+        "country": "Canada",
+        "province": "Quebec"
+      },
+      {
+        "name": "Université du Québec à Montréal",
+        "country": "Canada",
+        "province": "Quebec"
+      },
+      {
+        "name": "University of Guelph",
+        "country": "Canada",
+        "province": "Ontario"
+      },
+      {
+        "name": "Wilfrid Laurier University",
+        "country": "Canada",
+        "province": "Ontario"
+      },
+      {
+        "name": "Brock University",
+        "country": "Canada",
+        "province": "Ontario"
+      },
+      {
+        "name": "University of Windsor",
+        "country": "Canada",
+        "province": "Ontario"
+      },
+      {
+        "name": "Lakehead University",
+        "country": "Canada",
+        "province": "Ontario"
+      },
+      {
+        "name": "University of Northern British Columbia",
+        "country": "Canada",
+        "province": "British Columbia"
+      },
+      {
+        "name": "Thompson Rivers University",
+        "country": "Canada",
+        "province": "British Columbia"
+      },
+      {
+        "name": "University of Lethbridge",
+        "country": "Canada",
+        "province": "Alberta"
+      },
+      {
+        "name": "Mount Allison University",
+        "country": "Canada",
+        "province": "New Brunswick"
+      },
+      {
+        "name": "St. Francis Xavier University",
+        "country": "Canada",
+        "province": "Nova Scotia"
+      },
+      {
+        "name": "Acadia University",
+        "country": "Canada",
+        "province": "Nova Scotia"
+      },
+      {
+        "name": "Cape Breton University",
+        "country": "Canada",
+        "province": "Nova Scotia"
+      },
+      {
+        "name": "St. Thomas University",
+        "country": "Canada",
+        "province": "New Brunswick"
+      },
+      {
+        "name": "Université de Sherbrooke",
+        "country": "Canada",
+        "province": "Quebec"
+      },
+      {
+        "name": "Bishop's University",
+        "country": "Canada",
+        "province": "Quebec"
+      },
+      {
+        "name": "Harvard University",
+        "country": "United States",
+        "state": "Massachusetts"
+      },
+      {
+        "name": "Stanford University",
+        "country": "United States",
+        "state": "California"
+      },
+      {
+        "name": "Massachusetts Institute of Technology",
+        "country": "United States",
+        "state": "Massachusetts"
+      },
+      {
+        "name": "California Institute of Technology",
+        "country": "United States",
+        "state": "California"
+      },
+      {
+        "name": "University of Chicago",
+        "country": "United States",
+        "state": "Illinois"
+      },
+      {
+        "name": "Princeton University",
+        "country": "United States",
+        "state": "New Jersey"
+      },
+      {
+        "name": "Yale University",
+        "country": "United States",
+        "state": "Connecticut"
+      },
+      {
+        "name": "Columbia University",
+        "country": "United States",
+        "state": "New York"
+      },
+      {
+        "name": "University of Pennsylvania",
+        "country": "United States",
+        "state": "Pennsylvania"
+      },
+      {
+        "name": "Northwestern University",
+        "country": "United States",
+        "state": "Illinois"
+      },
+      {
+        "name": "Duke University",
+        "country": "United States",
+        "state": "North Carolina"
+      },
+      {
+        "name": "Johns Hopkins University",
+        "country": "United States",
+        "state": "Maryland"
+      },
+      {
+        "name": "Dartmouth College",
+        "country": "United States",
+        "state": "New Hampshire"
+      },
+      {
+        "name": "Brown University",
+        "country": "United States",
+        "state": "Rhode Island"
+      },
+      {
+        "name": "Vanderbilt University",
+        "country": "United States",
+        "state": "Tennessee"
+      },
+      {
+        "name": "Rice University",
+        "country": "United States",
+        "state": "Texas"
+      },
+      {
+        "name": "Washington University in St. Louis",
+        "country": "United States",
+        "state": "Missouri"
+      },
+      {
+        "name": "Cornell University",
+        "country": "United States",
+        "state": "New York"
+      },
+      {
+        "name": "University of Notre Dame",
+        "country": "United States",
+        "state": "Indiana"
+      },
+      {
+        "name": "University of California, Los Angeles",
+        "country": "United States",
+        "state": "California"
+      },
+      {
+        "name": "Emory University",
+        "country": "United States",
+        "state": "Georgia"
+      },
+      {
+        "name": "University of California, Berkeley",
+        "country": "United States",
+        "state": "California"
+      },
+      {
+        "name": "Georgetown University",
+        "country": "United States",
+        "state": "District of Columbia"
+      },
+      {
+        "name": "University of Michigan",
+        "country": "United States",
+        "state": "Michigan"
+      },
+      {
+        "name": "Carnegie Mellon University",
+        "country": "United States",
+        "state": "Pennsylvania"
+      },
+      {
+        "name": "University of Virginia",
+        "country": "United States",
+        "state": "Virginia"
+      },
+      {
+        "name": "University of Southern California",
+        "country": "United States",
+        "state": "California"
+      },
+      {
+        "name": "New York University",
+        "country": "United States",
+        "state": "New York"
+      },
+      {
+        "name": "Tufts University",
+        "country": "United States",
+        "state": "Massachusetts"
+      },
+      {
+        "name": "University of North Carolina at Chapel Hill",
+        "country": "United States",
+        "state": "North Carolina"
+      },
+      {
+        "name": "Wake Forest University",
+        "country": "United States",
+        "state": "North Carolina"
+      },
+      {
+        "name": "University of Rochester",
+        "country": "United States",
+        "state": "New York"
+      },
+      {
+        "name": "Georgia Institute of Technology",
+        "country": "United States",
+        "state": "Georgia"
+      },
+      {
+        "name": "University of California, San Diego",
+        "country": "United States",
+        "state": "California"
+      },
+      {
+        "name": "University of Florida",
+        "country": "United States",
+        "state": "Florida"
+      },
+      {
+        "name": "Boston College",
+        "country": "United States",
+        "state": "Massachusetts"
+      },
+      {
+        "name": "College of William & Mary",
+        "country": "United States",
+        "state": "Virginia"
+      },
+      {
+        "name": "University of California, Santa Barbara",
+        "country": "United States",
+        "state": "California"
+      },
+      {
+        "name": "University of California, Irvine",
+        "country": "United States",
+        "state": "California"
+      },
+      {
+        "name": "University of Georgia",
+        "country": "United States",
+        "state": "Georgia"
+      },
+      {
+        "name": "University of Illinois at Urbana-Champaign",
+        "country": "United States",
+        "state": "Illinois"
+      },
+      {
+        "name": "University of Wisconsin-Madison",
+        "country": "United States",
+        "state": "Wisconsin"
+      },
+      {
+        "name": "University of Texas at Austin",
+        "country": "United States",
+        "state": "Texas"
+      },
+      {
+        "name": "Pennsylvania State University",
+        "country": "United States",
+        "state": "Pennsylvania"
+      },
+      {
+        "name": "Ohio State University",
+        "country": "United States",
+        "state": "Ohio"
+      },
+      {
+        "name": "University of Washington",
+        "country": "United States",
+        "state": "Washington"
+      },
+      {
+        "name": "Purdue University",
+        "country": "United States",
+        "state": "Indiana"
+      },
+      {
+        "name": "University of Connecticut",
+        "country": "United States",
+        "state": "Connecticut"
+      },
+      {
+        "name": "University of Maryland",
+        "country": "United States",
+        "state": "Maryland"
+      },
+      {
+        "name": "Clemson University",
+        "country": "United States",
+        "state": "South Carolina"
+      },
+      {
+        "name": "Texas A&M University",
+        "country": "United States",
+        "state": "Texas"
+      },
+      {
+        "name": "University of Miami",
+        "country": "United States",
+        "state": "Florida"
+      }
+    ]
+  }

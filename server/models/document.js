@@ -10,7 +10,22 @@ const documentSchema = new mongoose.Schema({
   fileCategory: {
     type: String,
     required: true,
-    // Can be school name (UBC, SFU, Sauder, Beedie) or 'personal'
+    enum: ['personal', 'university'],
+    // 'personal' for personal essays, 'university' for university-specific essays
+  },
+  universityName: {
+    type: String,
+    required: function() {
+      return this.fileCategory === 'university';
+    },
+    // University name when fileCategory is 'university'
+  },
+  majorName: {
+    type: String,
+    required: function() {
+      return this.fileCategory === 'university';
+    },
+    // Major name when fileCategory is 'university'
   },
   documentName: {
     type: String,

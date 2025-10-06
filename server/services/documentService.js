@@ -13,32 +13,32 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage }).single('document');
 
-const uploadDocument = async (req, res) => {
-  upload(req, res, async (err) => {
-    if (err) {
-      return res.status(400).json({ error: err.message });
+const createDocument = async (req, res) => {
+  try {
+    const userId = req.user.user?.id || req.user.user?._id || req.user.id || req.user._id;
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID not found in authentication token.' });
     }
 
-    try {
-      const document = new Document({
-        userId: req.user.userId,
-        filename: req.file.filename,
-        originalName: req.file.originalname,
-        mimetype: req.file.mimetype,
-        path: req.file.path,
-      });
+    const documentData = {
+      ...req.body,
+      userId: userId
+    };
 
-      await document.save();
-      res.status(201).json(document);
-    } catch (error) {
-      res.status(400).json({ error: error.message });
-    }
-  });
+    const document = new Document(documentData);
+    await document.save();
+    res.status(201).json(document);
+  } catch (error) {
+    console.error('Create document error:', error);
+    res.status(500).json({ error: error.message });
+  }
 };
+
 
 const getDocuments = async (req, res) => {
   try {
-    const documents = await Document.find({ userId: req.user.userId });
+    const userId = req.user.user?.id || req.user.user?._id || req.user.id || req.user._id;
+    const documents = await Document.find({ userId: userId });
     res.json(documents);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -47,9 +47,10 @@ const getDocuments = async (req, res) => {
 
 const deleteDocument = async (req, res) => {
   try {
+    const userId = req.user.user?.id || req.user.user?._id || req.user.id || req.user._id;
     const document = await Document.findOneAndDelete({
       _id: req.params.id,
-      userId: req.user.userId,
+      userId: userId,
     });
     if (!document) {
       return res.status(404).json({ error: 'Document not found' });
@@ -61,7 +62,7 @@ const deleteDocument = async (req, res) => {
 };
 
 module.exports = {
-  uploadDocument,
+  createDocument,
   getDocuments,
   deleteDocument,
 };
